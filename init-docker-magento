@@ -12,11 +12,12 @@ function createMagento {
 		docker rm $CONTAINER_NAME &>/dev/null
 	fi
 
-	if [ $MVERSION=1 ]; then
+	if [ "$MVERSION" -eq "1" ]; then
 		REPO=fsspencer/magento
 	else
 		REPO=fsspencer/magento2
 	fi
+
 	# Create and start container
 	echo "\n-------------------------------------"
 	echo "Container creation response:"
@@ -49,11 +50,13 @@ function createMysql {
 
 
 function createDatabase {
-	CHECK_IF_EXISTS=$(eval docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME};")
-	if [ ! -z "$CHECK_IF_EXISTS" ]; then
+	CHECK_IF_EXISTS=$(eval 'docker exec -ti $CONTAINER_NAME mysqlshow -h ${DB_IPADDRESS} -uroot -proot ${DBNAME} | grep -v Wildcard | grep -o Unknown;')
+
+	if [ "$CHECK_IF_EXISTS" != "Unknown" ]; then
+	
 		echo "Database already exists!"
 
-		read -p "\nDo you wanna drop and re-create ${DBNAME}? [Y/n]: " DROPDB
+		read -p "Do you wanna drop and re-create ${DBNAME}? [Y/n]: " DROPDB
 		if [ "$DROPDB" = "Y" ]; then
 			docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE ${DBNAME};"
 		else
@@ -68,6 +71,54 @@ function createDatabase {
 
 function importDatabase {
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
+	if [ "$MVERSION" -eq "2" ]; then
+		docker exec -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
+		docker exec -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
+		docker exec -ti $CONTAINER_NAME n98-magerun2.phar cache:clean
+	else
+		docker exec -ti $CONTAINER_NAME n98-magerun config:set web/unsecure/base_url $BASE_URL
+		docker exec -ti $CONTAINER_NAME n98-magerun config:set web/secure/base_url $BASE_URL
+		docker exec -ti $CONTAINER_NAME n98-magerun cache:clean
+	fi
+}
+
+function install {
+	echo "\n"
+
+	if [ "$MVERSION" -eq "2" ]; then
+		if [ ! -f ${PROJECT_PATH}/bin/magento ]; then
+
+			read -p "Admin Username: " ADM_USER
+			read -p "Admin Password: " ADM_PWD
+			read -p "Admin First Name: " ADM_FNAME
+			read -p "Admin Last Name: " ADM_LNAME
+			read -p "Admin Email: " ADM_EMAIL
+			read -p "DB Prefix: " DB_PREFIX
+			
+			echo "\n"
+			rm -rf _src
+
+			read -p "Type [ce/ee]: " M2_VERSIONTYPE
+			if [ ! -z "$M2_VERSIONTYPE" ]; then
+				M2_VERSIONTYPE="ce"
+			fi
+			if [ "$M2_VERSIONTYPE" = "ee" ]; then
+				REPO_M2="--repository-url=https://repo.magento.com/ magento/project-enterprise-edition"
+			else
+				REPO_M2="magento/community-edition"
+			fi
+
+			read -p "Version Number [2.2.0]: " M2_VERSIONNUM
+			docker exec --user www-data -ti $CONTAINER_NAME composer create-project ${REPO_M2}:${M2_VERSIONNUM} _src
+
+			rsync -az --ignore-existing _src/* ./
+			rm -rf _src
+			
+		fi
+
+		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:install --db-host="$DB_IPADDRESS" --db-user="root" --db-password="root" --db-name="$DBNAME" --admin-user="$ADM_USER" --admin-password="$ADM_PWD" --admin-firstname="$ADM_FNAME" --admin-lastname="$ADM_LNAME" --admin-email="$ADM_EMAIL" --base-url="$BASE_URL" --db-prefix="$DB_PREFIX"
+		
+	fi
 }
 
 ######################################################
@@ -99,6 +150,12 @@ read -p "Port [80]: " PORT
 if [ -z "$PORT" ]; then
 	PORT="80"
 fi
+
+read -p "Base URL [http://dev.local/]: " BASE_URL
+if [ ! -z "$BASE_URL" ]; then
+	BASE_URL="http://dev.local/"
+fi
+
 docker stop $(docker ps | grep "${PORT}/tcp") &> /dev/null
 
 createMagento
@@ -126,7 +183,13 @@ if [ "$CREATEDB" = "Y" ]; then
 
 		importDatabase
 	else
-		IMPORTDB=0
+		
+		if [ "$MVERSION" -eq "2" ]; then
+			read -p "Install Magento? [Y/n]: " INSTALLMAGE
+			if [ "$INSTALLMAGE" = "Y" ]; then
+				install
+			fi
+		fi
 	fi
 else
 	CREATEDB=0

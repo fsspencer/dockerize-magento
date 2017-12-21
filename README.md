@@ -21,13 +21,13 @@ This is a simple bash script that allows you to create a container for a Magento
 If you are using a Magento 1 project
 
 ``
-$ docker exec -ti magento bash
+$ docker exec --user www-data -ti magento bash
 ``
 
 If you are using a Magento 2 project
 
 ``
-$ docker exec -ti magento2 bash
+$ docker exec --user www-data -ti magento2 bash
 ``
 
 This will locate you on the `/var/www/html` directory, which is your root dir with permissions for www-data:www-data.
