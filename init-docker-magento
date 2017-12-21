@@ -70,15 +70,16 @@ function createDatabase {
 
 
 function importDatabase {
+	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
 	if [ "$MVERSION" -eq "2" ]; then
-		docker exec -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
-		docker exec -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
-		docker exec -ti $CONTAINER_NAME n98-magerun2.phar cache:clean
+		docker exec --user www:data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
+		docker exec --user www:data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
+		docker exec --user www:data -ti $CONTAINER_NAME n98-magerun2.phar cache:clean
 	else
-		docker exec -ti $CONTAINER_NAME n98-magerun config:set web/unsecure/base_url $BASE_URL
-		docker exec -ti $CONTAINER_NAME n98-magerun config:set web/secure/base_url $BASE_URL
-		docker exec -ti $CONTAINER_NAME n98-magerun cache:clean
+		docker exec --user www:data -ti $CONTAINER_NAME n98-magerun config:set web/unsecure/base_url $BASE_URL
+		docker exec --user www:data -ti $CONTAINER_NAME n98-magerun config:set web/secure/base_url $BASE_URL
+		docker exec --user www:data -ti $CONTAINER_NAME n98-magerun cache:clean
 	fi
 }
 
