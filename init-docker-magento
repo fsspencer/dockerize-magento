@@ -50,9 +50,9 @@ function createMysql {
 
 
 function createDatabase {
-	CHECK_IF_EXISTS=$(eval 'docker exec -ti $CONTAINER_NAME mysqlshow -h ${DB_IPADDRESS} -uroot -proot ${DBNAME} | grep -v Wildcard | grep -o Unknown;')
+	CHECK_IF_EXISTS=$(eval 'docker exec -ti $CONTAINER_NAME mysqlshow -h $DB_IPADDRESS -uroot -proot $DBNAME | grep -v Wildcard | grep -o $DBNAME;')
 
-	if [ "$CHECK_IF_EXISTS" != "Unknown" ]; then
+	if [ "$CHECK_IF_EXISTS" = "$DBNAME" ]; then
 	
 		echo "Database already exists!"
 
@@ -86,20 +86,20 @@ function install {
 	echo "\n"
 
 	if [ "$MVERSION" -eq "2" ]; then
-		if [ ! -f ${PROJECT_PATH}/bin/magento ]; then
 
-			read -p "Admin Username: " ADM_USER
-			read -p "Admin Password: " ADM_PWD
-			read -p "Admin First Name: " ADM_FNAME
-			read -p "Admin Last Name: " ADM_LNAME
-			read -p "Admin Email: " ADM_EMAIL
-			read -p "DB Prefix: " DB_PREFIX
+		read -p "Admin Username: " ADM_USER
+		read -p "Admin Password: " ADM_PWD
+		read -p "Admin First Name: " ADM_FNAME
+		read -p "Admin Last Name: " ADM_LNAME
+		read -p "Admin Email: " ADM_EMAIL
+
+		if [ ! -f ${PROJECT_PATH}/bin/magento ]; then
 			
 			echo "\n"
 			rm -rf _src
 
 			read -p "Type [ce/ee]: " M2_VERSIONTYPE
-			if [ ! -z "$M2_VERSIONTYPE" ]; then
+			if [ -z "$M2_VERSIONTYPE" ]; then
 				M2_VERSIONTYPE="ce"
 			fi
 			if [ "$M2_VERSIONTYPE" = "ee" ]; then
@@ -116,7 +116,17 @@ function install {
 			
 		fi
 
-		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:install --db-host="$DB_IPADDRESS" --db-user="root" --db-password="root" --db-name="$DBNAME" --admin-user="$ADM_USER" --admin-password="$ADM_PWD" --admin-firstname="$ADM_FNAME" --admin-lastname="$ADM_LNAME" --admin-email="$ADM_EMAIL" --base-url="$BASE_URL" --db-prefix="$DB_PREFIX"
+		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:install \
+			--db-host="$DB_IPADDRESS" \
+			--db-user="root" \
+			--db-password="root" \
+			--db-name="$DBNAME" \
+			--admin-user="$ADM_USER" \
+			--admin-password="$ADM_PWD" \
+			--admin-firstname="$ADM_FNAME" \
+			--admin-lastname="$ADM_LNAME" \
+			--admin-email="$ADM_EMAIL" \
+			--base-url="$BASE_URL"
 		
 	fi
 }
@@ -152,7 +162,7 @@ if [ -z "$PORT" ]; then
 fi
 
 read -p "Base URL [http://dev.local/]: " BASE_URL
-if [ ! -z "$BASE_URL" ]; then
+if [ -z "$BASE_URL" ]; then
 	BASE_URL="http://dev.local/"
 fi
 
