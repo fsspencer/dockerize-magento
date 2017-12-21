@@ -144,3 +144,5 @@ if [ ! $CREATEDB = 0 ]; then
 	echo "MYSQL PASS: root"
 fi
 echo "-------------------------------------"
+echo "\nYou should add the following to your hosts file: \n\t0.0.0.0 your.local.url"
+echo "-------------------------------------"
