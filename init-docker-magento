@@ -126,7 +126,8 @@ function install {
 			--admin-firstname="$ADM_FNAME" \
 			--admin-lastname="$ADM_LNAME" \
 			--admin-email="$ADM_EMAIL" \
-			--base-url="$BASE_URL"
+			--base-url="$BASE_URL" \
+			--use-rewrites=1
 		
 	fi
 }
