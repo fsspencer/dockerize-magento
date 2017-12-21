@@ -18,7 +18,11 @@ function createMagento {
 		REPO=fsspencer/magento2
 	fi
 	# Create and start container
-	docker run -d --name $CONTAINER_NAME -v $PROJECT_PATH:/var/www/html -p $PORT:80 $REPO &>/dev/null
+	echo "\n-------------------------------------"
+	echo "Container creation response:"
+	echo "-------------------------------------"
+	docker run -d --name $CONTAINER_NAME -v $PROJECT_PATH:/var/www/html -p $PORT:80 $REPO
+	echo "\n"
 
 	# Get container IP Address
 	M2_IPADDRESS=$(docker inspect ${CONTAINER_NAME} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
@@ -27,13 +31,17 @@ function createMagento {
 
 function createMysql {
 	# Stop and Remove existing container
+	echo "\n-------------------------------------"
+	echo "Mysql container response:"
+	echo "-------------------------------------"
 	if [ ! "$(docker ps -a | grep mysql)" ]; then
 		# Create and start container
-		docker stop $(docker ps | grep "3306/tcp") &> /dev/null
-		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql &>/dev/null
+		docker stop $(docker ps | grep "3306/tcp")
+		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
 	else
-		docker start mysql &>/dev/null
+		docker start mysql
 	fi
+	echo "\n"
 
 	# Get container IP Address
 	DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
@@ -42,16 +50,30 @@ function createMysql {
 
 function createDatabase {
 	CHECK_IF_EXISTS=$(eval docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME};")
-	if [ ! -z $CHECK_IF_EXISTS ]; then
+	if [ ! -z "$CHECK_IF_EXISTS" ]; then
 		echo "Database already exists!"
-		exit 1
+
+		read -p "\nDo you wanna drop and re-create ${DBNAME}? [Y/n]: " DROPDB
+		if [ "$DROPDB" = "Y" ]; then
+			docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE ${DBNAME};"
+		else
+			echo "Start the process again with a different DB name"
+			exit 1
+		fi
+		
 	fi
-	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "CREATE DATABASE ${DBNAME}; USE ${DBNAME}; SOURCE ${SQLNAME};"
+	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "CREATE DATABASE ${DBNAME};"
+}
+
+
+function importDatabase {
+	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
 }
 
 ######################################################
 ####		 User Interaction
 ######################################################
+echo "\n"
 
 if [ -z $(eval command -v docker) ]; then
 	"Docker is not installed"
@@ -81,26 +103,33 @@ docker stop $(docker ps | grep "${PORT}/tcp") &> /dev/null
 
 createMagento
 
-read -p "Import database? [Y/n]: " IMPORTDB
-if [ "$IMPORTDB" = "Y" ]; then
-	
+read -p "Create database? [Y/n]: " CREATEDB	
+if [ "$CREATEDB" = "Y" ]; then
+
 	read -p "DB Name?: " DBNAME
 	if [ -z ${DBNAME} ]; then
-  	  echo "You need to specify a database name"
-  	  exit 1
+	  echo "You need to specify a database name"
+	  exit 1
 	fi
-
-	read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
-
-	if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
-  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
-  	  exit 1
-	fi
-
 	createMysql
 	createDatabase
+
+	read -p "Import database? [Y/n]: " IMPORTDB
+	if [ "$IMPORTDB" = "Y" ]; then
+
+		read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
+
+		if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
+	  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
+	  	  exit 1
+		fi
+
+		importDatabase
+	else
+		IMPORTDB=0
+	fi
 else
-	IMPORTDB=0
+	CREATEDB=0
 fi
 
 ######################################################
@@ -109,7 +138,7 @@ fi
 
 echo "-------------------------------------"
 echo "Magento IP Address: ${M2_IPADDRESS}"
-if [ ! $IMPORTDB = 0 ]; then
+if [ ! $CREATEDB = 0 ]; then
 	echo "MYSQL HOST: ${DB_IPADDRESS}"
 	echo "MYSQL USER: root"
 	echo "MYSQL PASS: root"
