@@ -50,22 +50,7 @@ function createMysql {
 
 
 function createDatabase {
-	CHECK_IF_EXISTS=$(eval 'docker exec -ti $CONTAINER_NAME mysqlshow -h $DB_IPADDRESS -uroot -proot $DBNAME | grep -v Wildcard | grep -o $DBNAME;')
-
-	if [ "$CHECK_IF_EXISTS" = "$DBNAME" ]; then
-	
-		echo "Database already exists!"
-
-		read -p "Do you wanna drop and re-create ${DBNAME}? [Y/n]: " DROPDB
-		if [ "$DROPDB" = "Y" ]; then
-			docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE ${DBNAME};"
-		else
-			echo "Start the process again with a different DB name"
-			exit 1
-		fi
-		
-	fi
-	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "CREATE DATABASE ${DBNAME};"
+	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE IF EXISTS ${DBNAME}; CREATE DATABASE ${DBNAME};"
 }
 
 
