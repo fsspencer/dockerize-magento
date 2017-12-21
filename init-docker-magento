@@ -1,0 +1,117 @@
+#!/bin/bash
+
+
+######################################################
+####		 Functions
+######################################################
+
+function createMagento {
+	# Stop and Remove existing container
+	if [ "$(docker ps -a | grep ${CONTAINER_NAME})" ]; then
+		docker stop $CONTAINER_NAME &>/dev/null
+		docker rm $CONTAINER_NAME &>/dev/null
+	fi
+
+	if [ $MVERSION=1 ]; then
+		REPO=fsspencer/magento
+	else
+		REPO=fsspencer/magento2
+	fi
+	# Create and start container
+	docker run -d --name $CONTAINER_NAME -v $PROJECT_PATH:/var/www/html -p $PORT:80 $REPO &>/dev/null
+
+	# Get container IP Address
+	M2_IPADDRESS=$(docker inspect ${CONTAINER_NAME} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
+	
+}
+
+function createMysql {
+	# Stop and Remove existing container
+	if [ ! "$(docker ps -a | grep mysql)" ]; then
+		# Create and start container
+		docker stop $(docker ps | grep "3306/tcp") &> /dev/null
+		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql &>/dev/null
+	else
+		docker start mysql &>/dev/null
+	fi
+
+	# Get container IP Address
+	DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
+}
+
+
+function createDatabase {
+	CHECK_IF_EXISTS=$(eval docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME};")
+	if [ ! -z $CHECK_IF_EXISTS ]; then
+		echo "Database already exists!"
+		exit 1
+	fi
+	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "CREATE DATABASE ${DBNAME}; USE ${DBNAME}; SOURCE ${SQLNAME};"
+}
+
+######################################################
+####		 User Interaction
+######################################################
+
+if [ -z $(eval command -v docker) ]; then
+	"Docker is not installed"
+	exit 1
+fi
+
+read -p "Magento Version [1 or 2]: " MVERSION
+if [ -z "$MVERSION" ]; then
+	MVERSION="2"
+	echo "Selected Magento 2";
+fi
+
+CONTAINER_NAME="magento${MVERSION}"
+
+read -p "Project path [$(eval pwd)]: " PROJECT_PATH
+if [ -z "$PROJECT_PATH" ]; then
+	PROJECT_PATH=$(eval pwd)
+fi
+
+PROJECT_PATH=$(eval echo $PROJECT_PATH | xargs)
+
+read -p "Port [80]: " PORT
+if [ -z "$PORT" ]; then
+	PORT="80"
+fi
+docker stop $(docker ps | grep "${PORT}/tcp") &> /dev/null
+
+createMagento
+
+read -p "Import database? [Y/n]: " IMPORTDB
+if [ "$IMPORTDB" = "Y" ]; then
+	
+	read -p "DB Name?: " DBNAME
+	if [ -z ${DBNAME} ]; then
+  	  echo "You need to specify a database name"
+  	  exit 1
+	fi
+
+	read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
+
+	if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
+  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
+  	  exit 1
+	fi
+
+	createMysql
+	createDatabase
+else
+	IMPORTDB=0
+fi
+
+######################################################
+####		 User Output
+######################################################
+
+echo "-------------------------------------"
+echo "Magento IP Address: ${M2_IPADDRESS}"
+if [ ! $IMPORTDB = 0 ]; then
+	echo "MYSQL HOST: ${DB_IPADDRESS}"
+	echo "MYSQL USER: root"
+	echo "MYSQL PASS: root"
+fi
+echo "-------------------------------------"
