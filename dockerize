@@ -1,6 +1,6 @@
 #!/bin/sh
 
-$SCRIPTNAME='dockerize'
+SCRIPTNAME='dockerize'
 
 ETC_HOSTS=/etc/hosts
 IP="0.0.0.0"
@@ -15,7 +15,7 @@ fi
 
 # Check if is dockerized
 if [ ! $IS_DOCKERIZED -eq 0 ]; then
-	HOSTNAME=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["HOSTNAME"]')
+	HOST_NAME=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["HOST_NAME"]')
 	MVERSION=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MVERSION"]')
 	MAGE_TYPE=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MAGE_TYPE"]')
 	CONTAINER_NAME="magento${MVERSION}"
@@ -31,49 +31,6 @@ fi
 if [[ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]]; then
   docker pull mysql
 fi
-
-case "$1" in
-    install)
-    shift 1
-    start
-    install
-    installDB
-    ;;
-
-    php)
-    shift 1
-    docker exec -ti $CONTAINER_NAME php $*
-    ;;
-
-    grunt)
-    shift 1
-    docker exec -ti $CONTAINER_NAME grunt $*
-    ;;
-
-    gulp)
-    shift 1
-    docker exec -ti $CONTAINER_NAME gulp $*
-    ;;
-
-    npm)
-    shift 1
-    docker exec -ti $CONTAINER_NAME npm $*
-    ;;
-
-    start)
-    start
-    ;;
-
-    stop)
-    stop
-    ;;
-
-    *)
-    usage
-    ;;
-esac
-
-exit 0
 
 ######################################################
 ####		 Functions
@@ -105,15 +62,11 @@ function init
 
 function stop {
 	# Stop and Remove existing container
-	if [ "$(docker ps -a | grep ${CONTAINER_NAME})" ]; then
-		docker stop $CONTAINER_NAME &>/dev/null
-		docker rm $CONTAINER_NAME &>/dev/null
-	fi
+	docker stop $(docker ps -q -a --filter name=magento) &>/dev/null
+	docker rm $CONTAINER_NAME &>/dev/null
 }
 
 function start {
-
-	stop
 
 	if [ -z $MVERSION ]; then
 		read -p "Magento Version [1 or 2]: " MVERSION
@@ -135,23 +88,18 @@ function start {
 		fi
 	fi
 
-	if [ -z $CONTAINER_NAME ]; then
-		CONTAINER_NAME="magento${MVERSION}"
-	fi
+	CONTAINER_NAME="magento${MVERSION}"
 
-	if [ -z "$HOSTNAME" ]; then
-		read -p "Base URL [dev.local]: " HOSTNAME
-		if [ -z "$HOSTNAME" ]; then
-			HOSTNAME="dev.local"
+	if [ -z "$HOST_NAME" ]; then
+		read -p "Base URL [dev.local]: " HOST_NAME
+		if [ -z "$HOST_NAME" ]; then
+			HOST_NAME="dev.local"
 		fi
 	fi
-	BASE_URL=http://${HOSTNAME}/
+	BASE_URL=http://${HOST_NAME}/
 
-	createMagento
-}
+	stop 
 
-function install {
-	
 	if [ "$MVERSION" -eq "1" ]; then
 		REPO=fsspencer/magento
 	else
@@ -167,7 +115,6 @@ function install {
 
 	# Get container IP Address
 	M2_IPADDRESS=$(docker inspect ${CONTAINER_NAME} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
-	
 }
 
 function createConfigFile {
@@ -227,6 +174,9 @@ function importDatabase {
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar cache:clean
+		
+		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:upgrade
+		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento cache:clean
 	else
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun config:set web/unsecure/base_url $BASE_URL
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun config:set web/secure/base_url $BASE_URL
@@ -234,7 +184,7 @@ function importDatabase {
 	fi
 }
 
-function install {
+function installMagento {
 	echo "\n"
 
 	if [ "$MVERSION" -eq "2" ]; then
@@ -311,7 +261,7 @@ function installDB {
 				if [ "$MVERSION" -eq "2" ]; then
 					read -p "Install Magento? [Y/n]: " INSTALLMAGE
 					if [ "$INSTALLMAGE" = "Y" ]; then
-						install
+						installMagento
 					fi
 				fi
 			fi
@@ -329,19 +279,36 @@ function addHost {
 	echo "Adding Host Entry:"
 	echo "-------------------------------------"
 	echo "This operation needs super privileges"
-    HOSTS_LINE="$IP $HOSTNAME"
-    sudo sed -i "" "/$HOSTNAME/d" $ETC_HOSTS
+    HOSTS_LINE="$IP $HOST_NAME"
+    sudo sed -i "" "/$HOST_NAME/d" $ETC_HOSTS
     sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
 }
 
 function finish {
-	DOCKERIZED_DATA="{\"HOSTNAME\":\""$HOSTNAME"\",\"MVERSION\":\""$MVERSION"\",\"MAGE_TYPE\":\""$MAGE_TYPE"\"}"
+	DOCKERIZED_DATA="{\"HOST_NAME\":\""$HOST_NAME"\",\"MVERSION\":\""$MVERSION"\",\"MAGE_TYPE\":\""$MAGE_TYPE"\"}"
 	echo $DOCKERIZED_DATA > $PROJECT_PATH/.dockerized
 
 	if [ -f $PROJECT_PATH/.gitignore ]; then
 		echo "/.dockerized" >> $PROJECT_PATH/.gitignore
 	fi
 }
+
+function outputData {
+	echo "\n-------------------------------------"
+	echo "Magento IP Address: ${M2_IPADDRESS}"
+	if [ ! $CREATEDB = 0 ]; then
+		echo "MYSQL HOST: ${DB_IPADDRESS}"
+		echo "MYSQL USER: root"
+		echo "MYSQL PASS: ${MYSQL_ROOT_PASSWORD}"
+	fi
+	echo "-------------------------------------"
+	echo "\nFrontend: ${BASE_URL}"
+	echo "-------------------------------------"
+}
+
+######################################################
+####		 User Interaction
+######################################################
 
 function usage {
   echo "Utility for controlling dockerized Magento projects\n"
@@ -357,17 +324,72 @@ function usage {
   printf "  %-15s%-30s\n" "stop" "Stop the server"
 }
 
-######################################################
-####		 User Output
-######################################################
 
-echo "\n-------------------------------------"
-echo "Magento IP Address: ${M2_IPADDRESS}"
-if [ ! $CREATEDB = 0 ]; then
-	echo "MYSQL HOST: ${DB_IPADDRESS}"
-	echo "MYSQL USER: root"
-	echo "MYSQL PASS: ${MYSQL_ROOT_PASSWORD}"
-fi
-echo "-------------------------------------"
-echo "\nFrontend: ${BASE_URL}"
-echo "-------------------------------------"
+case "$1" in
+    install)
+    shift 1
+    start
+    installDB
+    outputData
+    ;;
+
+    php)
+    shift 1
+    if [ -z $CONTAINER_NAME ]; then
+    	echo "Project is not initialized/started"
+    	exit 1
+	fi
+    docker exec -ti $CONTAINER_NAME php $*
+    ;;
+
+    composer)
+    shift 1
+    if [ -z $CONTAINER_NAME ]; then
+    	echo "Project is not initialized/started"	
+    	exit 1
+	fi
+    docker exec -ti $CONTAINER_NAME composer $*
+    ;;
+
+    grunt)
+    shift 1
+    if [ -z $CONTAINER_NAME ]; then
+    	echo "Project is not initialized/started"	
+    	exit 1
+	fi
+    docker exec -ti $CONTAINER_NAME grunt $*
+    ;;
+
+    gulp)
+    shift 1
+    if [ -z $CONTAINER_NAME ]; then
+    	echo "Project is not initialized/started"	
+    	exit 1
+	fi
+    docker exec -ti $CONTAINER_NAME gulp $*
+    ;;
+
+    npm)
+    shift 1
+    if [ -z $CONTAINER_NAME ]; then
+    	echo "Project is not initialized/started"	
+    	exit 1
+	fi
+    docker exec -ti $CONTAINER_NAME npm $*
+    ;;
+
+    start)
+    start
+    outputData
+    ;;
+
+    stop)
+    stop
+    ;;
+
+    *)
+    usage
+    ;;
+esac
+
+exit 0
