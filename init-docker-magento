@@ -5,6 +5,16 @@
 ####		 Functions
 ######################################################
 
+function startIfExists {
+	if [ ! $IS_DOCKERIZED -eq 0 ]; then
+		HOSTNAME=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["HOSTNAME"]')
+		MVERSION=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MVERSION"]')
+		MAGE_TYPE=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MAGE_TYPE"]')
+
+		echo "\nInitializing with existing configuration..."
+	fi
+}
+
 function createMagento {
 	# Stop and Remove existing container
 	if [ "$(docker ps -a | grep ${CONTAINER_NAME})" ]; then
@@ -87,6 +97,7 @@ function createDatabase {
 
 
 function importDatabase {
+	echo "\nImporting sql file into database..."
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
 	if [ "$MVERSION" -eq "2" ]; then
@@ -127,7 +138,7 @@ function install {
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:install \
 			--db-host="$DB_IPADDRESS" \
 			--db-user="root" \
-			--db-password="root" \
+			--db-password="$MYSQL_ROOT_PASSWORD" \
 			--db-name="$DBNAME" \
 			--admin-user="$ADM_USER" \
 			--admin-password="$ADM_PWD" \
@@ -140,17 +151,19 @@ function install {
 	fi
 }
 
-function removeHost {
-    if [ -n "$(grep $HOSTNAME $ETC_HOSTS)" ]; then
-        sudo sed -i "" "/$HOSTNAME/d" $ETC_HOSTS
-    fi
+function addHost {
+	echo "\n-------------------------------------"
+	echo "Adding Host Entry:"
+	echo "-------------------------------------"
+	echo "This operation needs super privileges"
+    HOSTS_LINE="$IP $HOSTNAME"
+    sudo sed -i "" "/$HOSTNAME/d" $ETC_HOSTS
+    sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
 }
 
-function addHost {
-    HOSTS_LINE="$IP $HOSTNAME"
-    if [ ! -n "$(grep $HOSTNAME $ETC_HOSTS)" ]; then
-        sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts";
-    fi
+function finish {
+	DOCKERIZED_DATA="{\"HOSTNAME\":\""$HOSTNAME"\",\"MVERSION\":\""$MVERSION"\",\"MAGE_TYPE\":\""$MAGE_TYPE"\"}"
+	echo $DOCKERIZED_DATA > $PROJECT_PATH/.dockerized
 }
 
 ######################################################
@@ -160,6 +173,11 @@ function addHost {
 ETC_HOSTS=/etc/hosts
 IP="0.0.0.0"
 HOSTNAME=$1
+PORT=80
+PROJECT_PATH=$(eval pwd)
+IS_DOCKERIZED=$(eval [ ! -e .dockerized ]; echo $?)
+
+startIfExists
 
 echo "\n"
 
@@ -168,35 +186,27 @@ if [ -z $(eval command -v docker) ]; then
 	exit 1
 fi
 
-read -p "Magento Version [1 or 2]: " MVERSION
-if [ -z "$MVERSION" ]; then
-	MVERSION="2"
-	echo "Selected Magento 2";
+if [ -z $MVERSION ]; then
+	read -p "Magento Version [1 or 2]: " MVERSION
+	if [ -z "$MVERSION" ]; then
+		MVERSION="2"
+		echo "Selected Magento 2";
+	fi
 fi
 
-read -p "Magento Type [ce/ee]: " MAGE_TYPE
-if [ -z "$MAGE_TYPE" ]; then
-	MAGE_TYPE="ce"
-fi
-if [ "$MAGE_TYPE" = "ee" ]; then
-	REPO_M2="--repository-url=https://repo.magento.com/ magento/project-enterprise-edition"
-else
-	REPO_M2="magento/community-edition"
+if [ -z $MAGE_TYPE ]; then
+	read -p "Magento Type [ce/ee]: " MAGE_TYPE
+	if [ -z "$MAGE_TYPE" ]; then
+		MAGE_TYPE="ce"
+	fi
+	if [ "$MAGE_TYPE" = "ee" ]; then
+		REPO_M2="--repository-url=https://repo.magento.com/ magento/project-enterprise-edition"
+	else
+		REPO_M2="magento/community-edition"
+	fi
 fi
 
 CONTAINER_NAME="magento${MVERSION}"
-
-read -p "Project path [$(eval pwd)]: " PROJECT_PATH
-if [ -z "$PROJECT_PATH" ]; then
-	PROJECT_PATH=$(eval pwd)
-fi
-
-PROJECT_PATH=$(eval echo $PROJECT_PATH | xargs)
-
-read -p "Port [80]: " PORT
-if [ -z "$PORT" ]; then
-	PORT="80"
-fi
 
 if [ -z "$HOSTNAME" ]; then
 	read -p "Base URL [dev.local]: " HOSTNAME
@@ -210,50 +220,54 @@ docker stop $(docker ps | grep "${PORT}/tcp") &> /dev/null
 
 createMagento
 
-read -p "Create database? (Drop of exists) [Y/n]: " CREATEDB	
-if [ "$CREATEDB" = "Y" ]; then
+if [ $IS_DOCKERIZED -eq 0 ]; then
 
-	read -p "DB Name?: " DBNAME
-	if [ -z ${DBNAME} ]; then
-	  echo "You need to specify a database name"
-	  exit 1
-	fi
+	read -p "Create database? (Drop of exists) [Y/n]: " CREATEDB	
+	if [ "$CREATEDB" = "Y" ]; then
 
-	createMysql
-	createDatabase
-
-	echo "\n"
-	read -p "Import database? [Y/n]: " IMPORTDB
-	if [ "$IMPORTDB" = "Y" ]; then
-
-		echo "\n-------------------------------------"
-		echo "Import Database:"
-		echo "-------------------------------------"
-
-		read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
-
-		if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
-	  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
-	  	  exit 1
+		read -p "DB Name?: " DBNAME
+		if [ -z ${DBNAME} ]; then
+		  echo "You need to specify a database name"
+		  exit 1
 		fi
 
-		createConfigFile
-		importDatabase
-	else
-		
-		if [ "$MVERSION" -eq "2" ]; then
-			read -p "Install Magento? [Y/n]: " INSTALLMAGE
-			if [ "$INSTALLMAGE" = "Y" ]; then
-				install
+		createMysql
+		createDatabase
+
+		echo "\n"
+		read -p "Import database? [Y/n]: " IMPORTDB
+		if [ "$IMPORTDB" = "Y" ]; then
+
+			echo "\n-------------------------------------"
+			echo "Import Database:"
+			echo "-------------------------------------"
+
+			read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
+
+			if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
+		  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
+		  	  exit 1
+			fi
+
+			createConfigFile
+			importDatabase
+		else
+			
+			if [ "$MVERSION" -eq "2" ]; then
+				read -p "Install Magento? [Y/n]: " INSTALLMAGE
+				if [ "$INSTALLMAGE" = "Y" ]; then
+					install
+				fi
 			fi
 		fi
+	else
+		CREATEDB=0
 	fi
-else
-	CREATEDB=0
-fi
 
-removeHost
-addHost
+	addHost
+
+	finish
+fi
 
 ######################################################
 ####		 User Output
