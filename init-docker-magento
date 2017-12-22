@@ -147,7 +147,7 @@ function removeHost {
 }
 
 function addHost {
-    HOSTS_LINE="$IP\t$HOSTNAME"
+    HOSTS_LINE="$IP $HOSTNAME"
     if [ ! -n "$(grep $HOSTNAME $ETC_HOSTS)" ]; then
         sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts";
     fi
@@ -158,7 +158,7 @@ function addHost {
 ######################################################
 
 ETC_HOSTS=/etc/hosts
-$IP="0.0.0.0"
+IP="0.0.0.0"
 HOSTNAME=$1
 
 echo "\n"
@@ -200,7 +200,7 @@ fi
 
 if [ -z "$HOSTNAME" ]; then
 	read -p "Base URL [dev.local]: " HOSTNAME
-	if [ -z "$BASE_URL" ]; then
+	if [ -z "$HOSTNAME" ]; then
 		HOSTNAME="dev.local"
 	fi
 fi
