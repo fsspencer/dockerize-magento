@@ -164,6 +164,10 @@ function addHost {
 function finish {
 	DOCKERIZED_DATA="{\"HOSTNAME\":\""$HOSTNAME"\",\"MVERSION\":\""$MVERSION"\",\"MAGE_TYPE\":\""$MAGE_TYPE"\"}"
 	echo $DOCKERIZED_DATA > $PROJECT_PATH/.dockerized
+
+	if [ -f $PROJECT_PATH/.gitignore ]; then
+		echo "/.dockerized" >> $PROJECT_PATH/.gitignore
+	fi
 }
 
 ######################################################
