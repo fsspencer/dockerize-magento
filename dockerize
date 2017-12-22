@@ -1,27 +1,157 @@
 #!/bin/sh
 
+$SCRIPTNAME='dockerize'
+
+ETC_HOSTS=/etc/hosts
+IP="0.0.0.0"
+PORT=80
+PROJECT_PATH=$(eval pwd)
+IS_DOCKERIZED=$(eval [ ! -e .dockerized ]; echo $?)
+
+if [ -z $(eval command -v docker) ]; then
+	"Docker is not installed"
+	exit 1
+fi
+
+# Check if is dockerized
+if [ ! $IS_DOCKERIZED -eq 0 ]; then
+	HOSTNAME=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["HOSTNAME"]')
+	MVERSION=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MVERSION"]')
+	MAGE_TYPE=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MAGE_TYPE"]')
+	CONTAINER_NAME="magento${MVERSION}"
+fi
+
+# Check if you have the images. If not
+if [[ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]]; then
+  docker pull fsspencer/magento
+fi
+if [[ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]]; then
+  docker pull fsspencer/magento2
+fi
+if [[ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]]; then
+  docker pull mysql
+fi
+
+case "$1" in
+    install)
+    shift 1
+    start
+    install
+    installDB
+    ;;
+
+    php)
+    shift 1
+    docker exec -ti $CONTAINER_NAME php $*
+    ;;
+
+    grunt)
+    shift 1
+    docker exec -ti $CONTAINER_NAME grunt $*
+    ;;
+
+    gulp)
+    shift 1
+    docker exec -ti $CONTAINER_NAME gulp $*
+    ;;
+
+    npm)
+    shift 1
+    docker exec -ti $CONTAINER_NAME npm $*
+    ;;
+
+    start)
+    start
+    ;;
+
+    stop)
+    stop
+    ;;
+
+    *)
+    usage
+    ;;
+esac
+
+exit 0
 
 ######################################################
 ####		 Functions
 ######################################################
 
-function startIfExists {
-	if [ ! $IS_DOCKERIZED -eq 0 ]; then
-		HOSTNAME=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["HOSTNAME"]')
-		MVERSION=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MVERSION"]')
-		MAGE_TYPE=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MAGE_TYPE"]')
+function init
+ {
+ 	docker pull fsspencer/magento
+ 	docker pull fsspencer/magento2
+ 	docker pull mysql
 
-		echo "\nInitializing with existing configuration..."
+	if [ ! "$(docker ps -a | grep mysql)" ]; then
+		# Create and start container
+		docker stop $(docker ps | grep "3306/tcp")
+		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
+		MYSQL_ROOT_PASSWORD="root"
+
+		"Setting up mysql..."
+		sleep 5s
+
+		docker start mysql
+		echo "Your current MySQL root password is: $MYSQL_ROOT_PASSWORD" 
+		echo "\n"
 	fi
+
+	echo "Installation finished"
+	exit
 }
 
-function createMagento {
+function stop {
 	# Stop and Remove existing container
 	if [ "$(docker ps -a | grep ${CONTAINER_NAME})" ]; then
 		docker stop $CONTAINER_NAME &>/dev/null
 		docker rm $CONTAINER_NAME &>/dev/null
 	fi
+}
 
+function start {
+
+	stop
+
+	if [ -z $MVERSION ]; then
+		read -p "Magento Version [1 or 2]: " MVERSION
+		if [ -z "$MVERSION" ]; then
+			MVERSION="2"
+			echo "Selected Magento 2";
+		fi
+	fi
+
+	if [ -z $MAGE_TYPE ]; then
+		read -p "Magento Type [ce/ee]: " MAGE_TYPE
+		if [ -z "$MAGE_TYPE" ]; then
+			MAGE_TYPE="ce"
+		fi
+		if [ "$MAGE_TYPE" = "ee" ]; then
+			REPO_M2="--repository-url=https://repo.magento.com/ magento/project-enterprise-edition"
+		else
+			REPO_M2="magento/community-edition"
+		fi
+	fi
+
+	if [ -z $CONTAINER_NAME ]; then
+		CONTAINER_NAME="magento${MVERSION}"
+	fi
+
+	if [ -z "$HOSTNAME" ]; then
+		read -p "Base URL [dev.local]: " HOSTNAME
+		if [ -z "$HOSTNAME" ]; then
+			HOSTNAME="dev.local"
+		fi
+	fi
+	BASE_URL=http://${HOSTNAME}/
+
+	createMagento
+}
+
+function install {
+	
 	if [ "$MVERSION" -eq "1" ]; then
 		REPO=fsspencer/magento
 	else
@@ -74,23 +204,10 @@ function createMysql {
 	echo "\n-------------------------------------"
 	echo "Mysql container response:"
 	echo "-------------------------------------"
-	if [ ! "$(docker ps -a | grep mysql)" ]; then
-		# Create and start container
-		docker stop $(docker ps | grep "3306/tcp")
-		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
-		MYSQL_ROOT_PASSWORD="root"
-
-		"Setting up mysql..."
-		sleep 5s
-
-		docker start mysql
-		echo "Your MySQL root password is: $MYSQL_ROOT_PASSWORD" 
-		echo "\n"
-	else
-		docker start mysql
-		echo "\n"
-		read -p "Mysql Root Password: " MYSQL_ROOT_PASSWORD
-	fi
+	
+	docker start mysql
+	echo "\n"	
+	read -p "Mysql Root Password: " MYSQL_ROOT_PASSWORD
 
 	# Get container IP Address
 	DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
@@ -157,6 +274,56 @@ function install {
 	fi
 }
 
+function installDB {
+	if [ $IS_DOCKERIZED -eq 0 ]; then
+
+		read -p "Create database? (Drop of exists) [Y/n]: " CREATEDB	
+		if [ "$CREATEDB" = "Y" ]; then
+
+			read -p "DB Name?: " DBNAME
+			if [ -z ${DBNAME} ]; then
+			  echo "You need to specify a database name"
+			  exit 1
+			fi
+
+			createMysql
+			createDatabase
+
+			echo "\n"
+			read -p "Import database? [Y/n]: " IMPORTDB
+			if [ "$IMPORTDB" = "Y" ]; then
+
+				echo "\n-------------------------------------"
+				echo "Import Database:"
+				echo "-------------------------------------"
+
+				read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
+
+				if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
+			  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
+			  	  exit 1
+				fi
+
+				createConfigFile
+				importDatabase
+			else
+				
+				if [ "$MVERSION" -eq "2" ]; then
+					read -p "Install Magento? [Y/n]: " INSTALLMAGE
+					if [ "$INSTALLMAGE" = "Y" ]; then
+						install
+					fi
+				fi
+			fi
+		else
+			CREATEDB=0
+		fi
+
+		addHost
+
+		finish
+	fi
+}
 function addHost {
 	echo "\n-------------------------------------"
 	echo "Adding Host Entry:"
@@ -176,108 +343,19 @@ function finish {
 	fi
 }
 
-######################################################
-####		 User Interaction
-######################################################
-
-ETC_HOSTS=/etc/hosts
-IP="0.0.0.0"
-HOSTNAME=$1
-PORT=80
-PROJECT_PATH=$(eval pwd)
-IS_DOCKERIZED=$(eval [ ! -e .dockerized ]; echo $?)
-
-startIfExists
-
-echo "\n"
-
-if [ -z $(eval command -v docker) ]; then
-	"Docker is not installed"
-	exit 1
-fi
-
-if [ -z $MVERSION ]; then
-	read -p "Magento Version [1 or 2]: " MVERSION
-	if [ -z "$MVERSION" ]; then
-		MVERSION="2"
-		echo "Selected Magento 2";
-	fi
-fi
-
-if [ -z $MAGE_TYPE ]; then
-	read -p "Magento Type [ce/ee]: " MAGE_TYPE
-	if [ -z "$MAGE_TYPE" ]; then
-		MAGE_TYPE="ce"
-	fi
-	if [ "$MAGE_TYPE" = "ee" ]; then
-		REPO_M2="--repository-url=https://repo.magento.com/ magento/project-enterprise-edition"
-	else
-		REPO_M2="magento/community-edition"
-	fi
-fi
-
-CONTAINER_NAME="magento${MVERSION}"
-
-if [ -z "$HOSTNAME" ]; then
-	read -p "Base URL [dev.local]: " HOSTNAME
-	if [ -z "$HOSTNAME" ]; then
-		HOSTNAME="dev.local"
-	fi
-fi
-BASE_URL=http://${HOSTNAME}/
-
-docker stop $(docker ps | grep "${PORT}/tcp") &> /dev/null
-
-createMagento
-
-if [ $IS_DOCKERIZED -eq 0 ]; then
-
-	read -p "Create database? (Drop of exists) [Y/n]: " CREATEDB	
-	if [ "$CREATEDB" = "Y" ]; then
-
-		read -p "DB Name?: " DBNAME
-		if [ -z ${DBNAME} ]; then
-		  echo "You need to specify a database name"
-		  exit 1
-		fi
-
-		createMysql
-		createDatabase
-
-		echo "\n"
-		read -p "Import database? [Y/n]: " IMPORTDB
-		if [ "$IMPORTDB" = "Y" ]; then
-
-			echo "\n-------------------------------------"
-			echo "Import Database:"
-			echo "-------------------------------------"
-
-			read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
-
-			if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
-		  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
-		  	  exit 1
-			fi
-
-			createConfigFile
-			importDatabase
-		else
-			
-			if [ "$MVERSION" -eq "2" ]; then
-				read -p "Install Magento? [Y/n]: " INSTALLMAGE
-				if [ "$INSTALLMAGE" = "Y" ]; then
-					install
-				fi
-			fi
-		fi
-	else
-		CREATEDB=0
-	fi
-
-	addHost
-
-	finish
-fi
+function usage {
+  echo "Utility for controlling dockerized Magento projects\n"
+  echo "Usage:\n\n  $SCRIPTNAME <action> <arguments...>"
+  echo ""
+  echo "Actions:\n"
+  printf "  %-15s%-30s\n" "install" "Install Magento and MySQL"
+  printf "  %-15s%-30s\n" "import" "Import existing Magento"
+  printf "  %-15s%-30s\n" "exec" "Execute bin/magento inside docker"
+  echo ""
+  printf "  %-15s%-30s\n" "start" "Start the server and all of its components"
+  printf "  %-15s%-30s\n" "restart" "Restart the server"
+  printf "  %-15s%-30s\n" "stop" "Stop the server"
+}
 
 ######################################################
 ####		 User Output
