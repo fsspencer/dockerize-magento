@@ -97,3 +97,7 @@ $ docker exec -ti magento bash
 ``
 $ mysql -h [YOUR MYSQL CONTAINER IP] -uroot -proot
 ``
+
+## Credits
+- Francis S. Spencer - <francis.s.spencer@gmail.com>
+- codealist.net
