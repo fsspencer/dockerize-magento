@@ -55,6 +55,14 @@ This is a simple bash script that allows you to create a container for a Magento
 5. Follow the steps of the script
 6. Select `create new database` and `import database` when the script asks. This will create your env.php file, set your store URL and the rest
 
+## Execute command remotely
+
+Using the following command you don't need to download the `dockerize` script locally:
+
+``
+sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
+``
+
 ## Switching Between Projects
 The `dockerize` script will create a new .dockerized file into your project root directory. Make sure to not commit that file to your repository.
 
