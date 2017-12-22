@@ -2,11 +2,11 @@
 return array (
   'backend' => 
   array (
-    'frontName' => '[BACKEND_FRONTNAME]',
+    'frontName' => 'BACKEND_FRONTNAME',
   ),
   'crypt' => 
   array (
-    'key' => '[CRYPT]', // sample: 6954a1ff91e2bb80bba35ebbaf35bcc9
+    'key' => 'CRYPT', // sample: 6954a1ff91e2bb80bba35ebbaf35bcc9
   ),
   'session' => 
   array (
@@ -19,10 +19,10 @@ return array (
     array (
       'default' => 
       array (
-        'host' => '[DB_HOST]',
-        'dbname' => '[DB_NAME]',
-        'username' => '[DB_USER]',
-        'password' => '[DB_PASSWORD]',
+        'host' => 'DB_HOST',
+        'dbname' => 'DB_NAME',
+        'username' => 'DB_USER',
+        'password' => 'DB_PASSWORD',
         'active' => '1',
       ),
     ),

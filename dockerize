@@ -79,6 +79,12 @@ function createMysql {
 		docker stop $(docker ps | grep "3306/tcp")
 		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
 		MYSQL_ROOT_PASSWORD="root"
+
+		"Setting up mysql..."
+		sleep 5s
+
+		docker start mysql
+		echo "Your MySQL root password is: $MYSQL_ROOT_PASSWORD" 
 		echo "\n"
 	else
 		docker start mysql
