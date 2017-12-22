@@ -17,6 +17,22 @@ This is a simple bash script that allows you to create a container for a Magento
 - Docker installed
 - Docker accessible via command line using the command `docker`
 
+## Execute command remotely
+
+Using the following command you don't need to download the `dockerize` script locally:
+
+``
+sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
+``
+
+### Recommendation
+Add an alias to your profile (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) to be able to use it as a shortcut:
+
+``
+alias dockerize='sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
+``
+
+
 ## Magento 1 Usage
 ### New Project
 1. Download a Magento clean instance from https://magento.com/tech-resources/download
@@ -51,26 +67,11 @@ This is a simple bash script that allows you to create a container for a Magento
 5. Follow the steps of the script
 6. Select `create new database` and `import database` when the script asks. This will create your env.php file, set your store URL and the rest
 
-## Execute command remotely
-
-Using the following command you don't need to download the `dockerize` script locally:
-
-``
-sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
-``
-
-### Recommendation
-Add an alias to your profile (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) to be able to use it as a shortcut:
-
-``
-alias dockerize='sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
-``
-
-
 ## Switching Between Projects
 The `dockerize` script will create a new .dockerized file into your project root directory. Make sure to not commit that file to your repository.
 
 That file will save some configuration parameters after you initialized the project for the first time, in order to prevent to execute the whole process twice.
+
 ## Access to Web Server
 
 If you are using a Magento 1 project
