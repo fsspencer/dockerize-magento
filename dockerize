@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPTNAME='dockerize'
+SCRIPTNAME="dockerize"
 
 ETC_HOSTS=/etc/hosts
 IP="0.0.0.0"
