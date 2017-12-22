@@ -30,6 +30,33 @@ function createMagento {
 	
 }
 
+function createConfigFile {
+	if [ "$MVERSION" -eq "2" ]; then
+		CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
+		curl -k https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
+	else
+		CONFIG_FILE=$PROJECT_PATH/app/etc/local.xml
+		curl -k https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/config/m1/local.xml > $CONFIG_FILE
+	fi
+
+	read -p "Crypt [783eee839c0396cf398e07e218e89e0a]: " CRYPT
+	if [ -z $CRYPT ]; then
+		CRYPT="783eee839c0396cf398e07e218e89e0a"
+	fi
+
+	read -p "Backend Frontname [backend]: " BACKEND_FRONTNAME
+	if [ -z $BACKEND_FRONTNAME ]; then
+		BACKEND_FRONTNAME="backend"
+	fi
+
+	sed -i 's/CRYPT/${CRYPT}' $CONFIG_FILE
+	sed -i 's/DB_HOST/${DB_IPADDRESS}' $CONFIG_FILE
+	sed -i 's/DB_USER/root' $CONFIG_FILE
+	sed -i 's/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}' $CONFIG_FILE
+	sed -i 's/DB_NAME/${DBNAME}' $CONFIG_FILE
+	sed -i 's/BACKEND_FRONTNAME/backend' $CONFIG_FILE
+}
+
 function createMysql {
 	# Stop and Remove existing container
 	echo "\n-------------------------------------"
@@ -39,8 +66,10 @@ function createMysql {
 		# Create and start container
 		docker stop $(docker ps | grep "3306/tcp")
 		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
+		MYSQL_ROOT_PASSWORD="root"
 	else
 		docker start mysql
+		read -p "Mysql Root Password: " MYSQL_ROOT_PASSWORD
 	fi
 	echo "\n"
 
@@ -84,16 +113,6 @@ function install {
 			echo "\n"
 			rm -rf _src
 
-			read -p "Type [ce/ee]: " M2_VERSIONTYPE
-			if [ -z "$M2_VERSIONTYPE" ]; then
-				M2_VERSIONTYPE="ce"
-			fi
-			if [ "$M2_VERSIONTYPE" = "ee" ]; then
-				REPO_M2="--repository-url=https://repo.magento.com/ magento/project-enterprise-edition"
-			else
-				REPO_M2="magento/community-edition"
-			fi
-
 			read -p "Version Number [2.2.0]: " M2_VERSIONNUM
 			docker exec --user www-data -ti $CONTAINER_NAME composer create-project ${REPO_M2}:${M2_VERSIONNUM} _src
 
@@ -134,6 +153,16 @@ if [ -z "$MVERSION" ]; then
 	echo "Selected Magento 2";
 fi
 
+read -p "Magento Type [ce/ee]: " MAGE_TYPE
+if [ -z "$MAGE_TYPE" ]; then
+	MAGE_TYPE="ce"
+fi
+if [ "$MAGE_TYPE" = "ee" ]; then
+	REPO_M2="--repository-url=https://repo.magento.com/ magento/project-enterprise-edition"
+else
+	REPO_M2="magento/community-edition"
+fi
+
 CONTAINER_NAME="magento${MVERSION}"
 
 read -p "Project path [$(eval pwd)]: " PROJECT_PATH
@@ -165,6 +194,7 @@ if [ "$CREATEDB" = "Y" ]; then
 	  echo "You need to specify a database name"
 	  exit 1
 	fi
+
 	createMysql
 	createDatabase
 
@@ -178,6 +208,7 @@ if [ "$CREATEDB" = "Y" ]; then
 	  	  exit 1
 		fi
 
+		createConfigFile
 		importDatabase
 	else
 		
