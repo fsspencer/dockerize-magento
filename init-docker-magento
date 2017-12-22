@@ -278,7 +278,7 @@ echo "Magento IP Address: ${M2_IPADDRESS}"
 if [ ! $CREATEDB = 0 ]; then
 	echo "MYSQL HOST: ${DB_IPADDRESS}"
 	echo "MYSQL USER: root"
-	echo "MYSQL PASS: root"
+	echo "MYSQL PASS: ${MYSQL_ROOT_PASSWORD}"
 fi
 echo "-------------------------------------"
 echo "\nFrontend: ${BASE_URL}"
