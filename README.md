@@ -46,16 +46,16 @@ Actions:
 >   **php**: *Executes php cli within your project root*
 >   
 > **composer**: *Executes composer within your project root*
->   **grunt**:          *Executes grunt-cli Utility within your project root*
+>   **grunt**: *Executes grunt-cli Utility within your project root*
 >   
-> **gulp**:           *Executes gulp Utility within your project root*
+> **gulp**: *Executes gulp Utility within your project root*
 >   
-> **npm**:            *Executes npm within your project root*
+> **npm**: *Executes npm within your project root*
 > 
 > 
->   **start**:          *Start the server and all of its components*
+>   **start**: *Start the server and all of its components*
 > 
->   **stop**:           *Stop the server*
+>   **stop**: *Stop the server*
 
 ## Magento 1 Usage
 ### New Project

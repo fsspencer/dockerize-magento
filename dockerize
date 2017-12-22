@@ -6,7 +6,7 @@ ETC_HOSTS=/etc/hosts
 IP="0.0.0.0"
 PORT=80
 PROJECT_PATH=$(eval pwd)
-IS_DOCKERIZED=$(eval [ ! -e .dockerized ]; echo $?)
+IS_DOCKERIZED=$(eval [ ! -e ${PROJECT_PATH}/.dockerized ]; echo $?)
 
 if [ -z $(eval command -v docker) ]; then
 	"Docker is not installed"
