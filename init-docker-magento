@@ -31,14 +31,16 @@ function createMagento {
 }
 
 function createConfigFile {
+	echo "\nDownloading config file..."
 	if [ "$MVERSION" -eq "2" ]; then
 		CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
 		curl -k https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
 	else
 		CONFIG_FILE=$PROJECT_PATH/app/etc/local.xml
-		curl -k https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/config/m1/local.xml > $CONFIG_FILE
+		curl -k https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
 	fi
 
+	echo "\n"
 	read -p "Crypt [783eee839c0396cf398e07e218e89e0a]: " CRYPT
 	if [ -z $CRYPT ]; then
 		CRYPT="783eee839c0396cf398e07e218e89e0a"
@@ -49,12 +51,12 @@ function createConfigFile {
 		BACKEND_FRONTNAME="backend"
 	fi
 
-	sed -i 's/CRYPT/${CRYPT}' $CONFIG_FILE
-	sed -i 's/DB_HOST/${DB_IPADDRESS}' $CONFIG_FILE
-	sed -i 's/DB_USER/root' $CONFIG_FILE
-	sed -i 's/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}' $CONFIG_FILE
-	sed -i 's/DB_NAME/${DBNAME}' $CONFIG_FILE
-	sed -i 's/BACKEND_FRONTNAME/backend' $CONFIG_FILE
+	sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+	sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
+	sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
+	sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
+	sed -i '' "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
+	sed -i '' "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
 }
 
 function createMysql {
@@ -67,11 +69,12 @@ function createMysql {
 		docker stop $(docker ps | grep "3306/tcp")
 		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
 		MYSQL_ROOT_PASSWORD="root"
+		echo "\n"
 	else
 		docker start mysql
+		echo "\n"
 		read -p "Mysql Root Password: " MYSQL_ROOT_PASSWORD
 	fi
-	echo "\n"
 
 	# Get container IP Address
 	DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
@@ -137,9 +140,42 @@ function install {
 	fi
 }
 
+function removehost() {
+    if [ -n "$(grep $HOSTNAME /etc/hosts)" ]
+    then
+        echo "$HOSTNAME Found in your $ETC_HOSTS, Removing now...";
+        sudo sed -i".bak" "/$HOSTNAME/d" $ETC_HOSTS
+    else
+        echo "$HOSTNAME was not found in your $ETC_HOSTS";
+    fi
+}
+
+function addhost() {
+    HOSTS_LINE="$IP\t$HOSTNAME"
+    if [ -n "$(grep $HOSTNAME /etc/hosts)" ]
+        then
+            echo "$HOSTNAME already exists : $(grep $HOSTNAME $ETC_HOSTS)"
+        else
+            echo "Adding $HOSTNAME to your $ETC_HOSTS";
+            sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts";
+
+            if [ -n "$(grep $HOSTNAME /etc/hosts)" ]
+                then
+                    echo "$HOSTNAME was added succesfully \n $(grep $HOSTNAME /etc/hosts)";
+                else
+                    echo "Failed to Add $HOSTNAME, Try again!";
+            fi
+    fi
+}
+
 ######################################################
 ####		 User Interaction
 ######################################################
+
+ETC_HOSTS=/etc/hosts
+$IP="0.0.0.0"
+HOSTNAME=$1
+
 echo "\n"
 
 if [ -z $(eval command -v docker) ]; then
@@ -177,10 +213,13 @@ if [ -z "$PORT" ]; then
 	PORT="80"
 fi
 
-read -p "Base URL [http://dev.local/]: " BASE_URL
-if [ -z "$BASE_URL" ]; then
-	BASE_URL="http://dev.local/"
+if [ -z "$HOSTNAME" ]; then
+	read -p "Base URL [dev.local]: " HOSTNAME
+	if [ -z "$BASE_URL" ]; then
+		HOSTNAME="dev.local"
+	fi
 fi
+BASE_URL=http://${HOSTNAME}/
 
 docker stop $(docker ps | grep "${PORT}/tcp") &> /dev/null
 
@@ -198,8 +237,13 @@ if [ "$CREATEDB" = "Y" ]; then
 	createMysql
 	createDatabase
 
+	echo "\n"
 	read -p "Import database? [Y/n]: " IMPORTDB
 	if [ "$IMPORTDB" = "Y" ]; then
+
+		echo "\n-------------------------------------"
+		echo "Import Database:"
+		echo "-------------------------------------"
 
 		read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
 
@@ -235,5 +279,5 @@ if [ ! $CREATEDB = 0 ]; then
 	echo "MYSQL PASS: root"
 fi
 echo "-------------------------------------"
-echo "\nYou should add the following to your hosts file: \n\t0.0.0.0 your.local.url"
+echo "\nYou should add the following to your hosts file: \n\t0.0.0.0 ${BASE_DOMAIN}"
 echo "-------------------------------------"
