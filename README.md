@@ -17,27 +17,51 @@ This is a simple bash script that allows you to create a container for a Magento
 - Docker installed
 - Docker accessible via command line using the command `docker`
 
-## Execute command remotely
+## Installation
 
-Using the following command you don't need to download the `dockerize` script locally:
 
-``
-sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
-``
-
-### Recommendation
-Add an alias to your profile (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) to be able to use it as a shortcut:
+Open your bash file (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) and append the following line:
 
 ``
-alias dockerize='sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
+alias dockerize='sh <(curl -s -H "Cache-Control: no-cache" https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
 ``
 
+Then reload the configurations to apply the changes:
+``
+source ~/.bash_profile
+``
+
+Or whatever is your profile file.
+
+## Usage
+
+ dockerize <action> <arguments...>
+
+Actions:
+
+>   **install**: *Install Magento and MySQL*
+> 
+>   **bash**: *Connect to your docker container*
+> 
+>   **php**: *Executes php cli within your project root*
+>   
+> **composer**: *Executes composer within your project root*
+>   **grunt**:          *Executes grunt-cli Utility within your project root*
+>   
+> **gulp**:           *Executes gulp Utility within your project root*
+>   
+> **npm**:            *Executes npm within your project root*
+> 
+> 
+>   **start**:          *Start the server and all of its components*
+> 
+>   **stop**:           *Stop the server*
 
 ## Magento 1 Usage
 ### New Project
 1. Download a Magento clean instance from https://magento.com/tech-resources/download
 2. Uncompress the Magento code and go into the project root directory
-3. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
+3. Execute the following from your root directory `dockerize install`
 4. Follow the steps of the script
 5. Select `create new database` without importing anything
 6. Go to your browser and navigate to the URL you picked (http://dev.local/ by default)
@@ -45,14 +69,14 @@ alias dockerize='sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-d
 ### Existing Project
 1. Download your project code within any directory you want
 2. Copy a single sql file with a database dump to your project root
-3. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
+3. Execute the following from your root directory `dockerize install`
 4. Follow the steps of the script
 5. Select `create new database` and `import database` when the script asks. This will create your local.xml file, set your store URL and the rest
 
 ## Magento 2 Usage
 ### New Project
 1. Create a new directory for your project
-2. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
+2. Execute the following from your root directory `dockerize install`
 3. Follow the steps of the script
 4. Enter `Y` when it asks for `create database` 
 5. Enter `n` when it asks for `import database` 
@@ -63,14 +87,16 @@ alias dockerize='sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-d
 1. Download your project code within any directory you want
 2. Copy a single sql file with a database dump to your project root
 3. Get a copy from the original app/etc/config.php
-4. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
+4. Execute the following from your root directory `dockerize install`
 5. Follow the steps of the script
 6. Select `create new database` and `import database` when the script asks. This will create your env.php file, set your store URL and the rest
 
 ## Switching Between Projects
-The `dockerize` script will create a new .dockerized file into your project root directory. Make sure to not commit that file to your repository.
+The `dockerize start` command will create a new .dockerized file into your project root directory. Make sure to not commit that file to your repository.
 
 That file will save some configuration parameters after you initialized the project for the first time, in order to prevent to execute the whole process twice.
+
+Whenever you execute `dockerize start` it will stop any magento docker container and initialize a new one with the current project.
 
 ## Access to Web Server
 

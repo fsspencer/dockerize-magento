@@ -2,7 +2,7 @@
 return array (
   'backend' => 
   array (
-    'frontName' => '[BACKEND_FRONTNAME]',
+    'frontName' => 'BACKEND_FRONTNAME',
   ),
   'db' => 
   array (
@@ -10,19 +10,19 @@ return array (
     array (
       'indexer' => 
       array (
-        'host' => '[DB_HOST]',
-        'dbname' => '[DB_NAME]',
-        'username' => '[DB_USER]',
-        'password' => '[DB_PASSWORD]',
+        'host' => 'DB_HOST',
+        'dbname' => 'DB_NAME',
+        'username' => 'DB_USER',
+        'password' => 'DB_PASSWORD',
         'active' => '1',
         'persistent' => NULL,
       ),
       'default' => 
       array (
-        'host' => '[DB_HOST]',
-        'dbname' => '[DB_NAME]',
-        'username' => '[DB_USER]',
-        'password' => '[DB_PASSWORD]',
+        'host' => 'DB_HOST',
+        'dbname' => 'DB_NAME',
+        'username' => 'DB_USER',
+        'password' => 'DB_PASSWORD',
         'active' => '1',
       ),
     ),
@@ -30,7 +30,7 @@ return array (
   ),
   'crypt' => 
   array (
-    'key' => '[CRYPT]', // sample: 6954a1ff91e2bb80bba35ebbaf35bcc9
+    'key' => 'CRYPT', // sample: 6954a1ff91e2bb80bba35ebbaf35bcc9
   ),
   'session' => 
   array (
@@ -64,6 +64,6 @@ return array (
   ),
   'install' => 
   array (
-    'date' => '[DATE]', // sample: Fri, 03 Mar 2017 13:26:52 +0000
+    'date' => 'Fri, 03 Mar 2017 13:26:52 +0000', // sample: Fri, 03 Mar 2017 13:26:52 +0000
   ),
 );

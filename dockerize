@@ -345,7 +345,7 @@ case "$1" in
     	echo "Project is not initialized/started"
     	exit 1
 	fi
-    docker exec -ti $CONTAINER_NAME php $*
+    docker exec --user www-data -ti $CONTAINER_NAME php $*
     ;;
 
     composer)
@@ -354,7 +354,7 @@ case "$1" in
     	echo "Project is not initialized/started"	
     	exit 1
 	fi
-    docker exec -ti $CONTAINER_NAME composer $*
+    docker exec --user www-data -ti $CONTAINER_NAME composer $*
     ;;
 
     grunt)
@@ -363,7 +363,7 @@ case "$1" in
     	echo "Project is not initialized/started"	
     	exit 1
 	fi
-    docker exec -ti $CONTAINER_NAME grunt $*
+    docker exec --user www-data -ti $CONTAINER_NAME grunt $*
     ;;
 
     gulp)
@@ -372,7 +372,7 @@ case "$1" in
     	echo "Project is not initialized/started"	
     	exit 1
 	fi
-    docker exec -ti $CONTAINER_NAME gulp $*
+    docker exec --user www-data -ti $CONTAINER_NAME gulp $*
     ;;
 
     npm)
@@ -381,7 +381,16 @@ case "$1" in
     	echo "Project is not initialized/started"	
     	exit 1
 	fi
-    docker exec -ti $CONTAINER_NAME npm $*
+    docker exec --user www-data -ti $CONTAINER_NAME npm $*
+    ;;
+
+    bash)
+    shift 1
+    if [ -z $CONTAINER_NAME ]; then
+    	echo "Project is not initialized/started"	
+    	exit 1
+	fi
+    docker exec --user www-data -ti $CONTAINER_NAME npm bash
     ;;
 
     start)
