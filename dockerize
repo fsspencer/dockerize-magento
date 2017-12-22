@@ -316,8 +316,7 @@ function usage {
   echo ""
   echo "Actions:\n"
   printf "  %-15s%-30s\n" "install" "Install Magento and MySQL"
-  printf "  %-15s%-30s\n" "import" "Import existing Magento"
-  printf "  %-15s%-30s\n" "exec" "Execute bin/magento inside docker"
+  printf "  %-15s%-30s\n" "bash" "Connect to your docker container"
   echo ""
   printf "  %-15s%-30s\n" "php" "Executes php cli within your project root"
   printf "  %-15s%-30s\n" "composer" "Executes composer within your project root"
@@ -326,7 +325,6 @@ function usage {
   printf "  %-15s%-30s\n" "npm" "Executes npm within your project root"
   echo ""
   printf "  %-15s%-30s\n" "start" "Start the server and all of its components"
-  printf "  %-15s%-30s\n" "restart" "Restart the server"
   printf "  %-15s%-30s\n" "stop" "Stop the server"
 }
 
