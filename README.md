@@ -21,37 +21,33 @@ This is a simple bash script that allows you to create a container for a Magento
 ### New Project
 1. Download a Magento clean instance from https://magento.com/tech-resources/download
 2. Uncompress the Magento code and go into the project root directory
-2. Copy the `dockerize` script from this repository to your project root
-3. Execute `./dockerize` or `sh dockerize`
-5. Follow the steps of the script
-6. Select `create new database` without importing anything
-7. Go to your browser and navigate to the URL you picked (http://dev.local/ by default)
+3. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
+4. Follow the steps of the script
+5. Select `create new database` without importing anything
+6. Go to your browser and navigate to the URL you picked (http://dev.local/ by default)
 
 ### Existing Project
 1. Download your project code within any directory you want
 2. Copy a single sql file with a database dump to your project root
-3. Copy the `dockerize` script from this repository to your project root
-4. Execute `./dockerize` or `sh dockerize`
-5. Follow the steps of the script
-6. Select `create new database` and `import database` when the script asks. This will create your local.xml file, set your store URL and the rest
+3. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
+4. Follow the steps of the script
+5. Select `create new database` and `import database` when the script asks. This will create your local.xml file, set your store URL and the rest
 
 ## Magento 2 Usage
 ### New Project
 1. Create a new directory for your project
-2. Copy the `dockerize` script from this repository to your new directory
-3. Execute `./dockerize` or `sh dockerize`
-5. Follow the steps of the script
-6. Enter `Y` when it asks for `create database` 
-7. Enter `n` when it asks for `import database` 
-8. Enter `Y` when it asks for `install magento` and pick the version you want to install. This will do the rest for you
+2. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
+3. Follow the steps of the script
+4. Enter `Y` when it asks for `create database` 
+5. Enter `n` when it asks for `import database` 
+6. Enter `Y` when it asks for `install magento` and pick the version you want to install. This will do the rest for you
 7. Go to your browser and navigate to the URL you picked (http://dev.local/ by default)
 
 ### Existing Project
 1. Download your project code within any directory you want
 2. Copy a single sql file with a database dump to your project root
 3. Get a copy from the original app/etc/config.php
-3. Copy the `dockerize` script from this repository to your project root
-4. Execute `./dockerize` or `sh dockerize`
+4. Execute the following from your root directory `sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)`
 5. Follow the steps of the script
 6. Select `create new database` and `import database` when the script asks. This will create your env.php file, set your store URL and the rest
 
@@ -62,6 +58,14 @@ Using the following command you don't need to download the `dockerize` script lo
 ``
 sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
 ``
+
+### Recommendation
+Add an alias to your profile (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) to be able to use it as a shortcut:
+
+``
+alias dockerize='sh <(curl -s https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
+``
+
 
 ## Switching Between Projects
 The `dockerize` script will create a new .dockerized file into your project root directory. Make sure to not commit that file to your repository.
