@@ -18,7 +18,20 @@ This is a simple bash script that allows you to create a container for a Magento
 - Docker accessible via command line using the command `docker`
 
 ## Installation
+### Composer
+``
+composer require fsspencer/dockerize-magento
+``
 
+This will create a dockerize file to your project root directory. You just need to run it:
+
+`./dockerize`
+
+or
+
+`sh dockerize`
+
+### Manual
 
 Open your bash file (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) and append the following line:
 
