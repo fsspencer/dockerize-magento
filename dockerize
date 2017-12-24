@@ -121,10 +121,10 @@ function createConfigFile {
 	echo "\nDownloading config file..."
 	if [ "$MVERSION" -eq "2" ]; then
 		CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
-		curl -k https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
+		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
 	else
 		CONFIG_FILE=$PROJECT_PATH/app/etc/local.xml
-		curl -k https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
+		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
 	fi
 
 	echo "\n"

@@ -1,0 +1,23 @@
+{
+  "name": "fsspencer/dockerize-magento",
+  "description": "Docker bash console to manage Magento 1 and 2 projects",
+  "license": "Apache-2.0",
+  "authors": [
+      {
+          "name": "Francis S. Spencer",
+          "email": "francis.s.spencer@gmail.com",
+          "homepage": "https://codealist.net/",
+          "role": "Author"
+      }
+  ],
+  "type": "magento2-component",
+  "homepage": "https://github.com/fsspencer/dockerize-magento",
+  "extra": {
+    "map": [
+      [
+        "dockerize",
+        "dockerize"
+      ]
+    ]
+  }
+}
