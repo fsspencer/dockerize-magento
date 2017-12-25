@@ -231,7 +231,7 @@ function installMagento {
 function installDB {
 	if [ $IS_DOCKERIZED -eq 0 ]; then
 
-		read -p "Create database? (Drop of exists) [Y/n]: " CREATEDB	
+		read -p "Create database? (Drop if exists) [Y/n]: " CREATEDB	
 		if [ "$CREATEDB" = "Y" ]; then
 
 			read -p "DB Name?: " DBNAME
