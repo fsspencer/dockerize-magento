@@ -10,7 +10,7 @@ IS_DOCKERIZED=$(eval [ ! -e ${PROJECT_PATH}/.dockerized ]; echo $?)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\034[0;32m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 if [ -z $(eval command -v docker) ]; then
@@ -323,7 +323,7 @@ function usage {
   echo -e "Usage:\n\n  $SCRIPTNAME <action> <arguments...>"
   echo -e ""
   echo -e "Actions:\n"
-  echo -e " " "${GREEN}install${NC}" "\t" "Install Magento and MySQL"
+  echo -e " " "${BLUE}install${NC}" "\t" "Install Magento and MySQL"
   echo -e " " "${GREEN}bash${NC}" "\t\t" "Connect to your docker container"
   echo -e ""
   echo -e " " "${GREEN}php${NC}" "\t\t" "Executes php cli within your project root"
