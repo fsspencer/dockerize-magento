@@ -22,13 +22,13 @@ if [ ! $IS_DOCKERIZED -eq 0 ]; then
 fi
 
 # Check if you have the images. If not
-if [[ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]]; then
+if [ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]; then
   docker pull fsspencer/magento
 fi
-if [[ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]]; then
+if [ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]; then
   docker pull fsspencer/magento2
 fi
-if [[ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]]; then
+if [ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]; then
   docker pull mysql
 fi
 
