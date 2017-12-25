@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SCRIPTNAME="dockerize"
 
@@ -48,12 +48,11 @@ function init
 		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
 		MYSQL_ROOT_PASSWORD="root"
 
-		"Setting up mysql..."
+		echo "Setting up mysql..."
 		sleep 5s
 
 		docker start mysql
-		echo "Your current MySQL root password is: $MYSQL_ROOT_PASSWORD" 
-		echo "\n"
+		echo -e "Your current MySQL root password is: $MYSQL_ROOT_PASSWORD\n"
 	fi
 
 	echo "Installation finished"
@@ -107,18 +106,18 @@ function start {
 	fi
 
 	# Create and start container
-	echo "\n-------------------------------------"
-	echo "Container creation response:"
-	echo "-------------------------------------"
+	echo -e "\n-------------------------------------"
+	echo -e "Container creation response:"
+	echo -e "-------------------------------------"
 	docker run -d --name $CONTAINER_NAME -v $PROJECT_PATH:/var/www/html -p $PORT:80 $REPO
-	echo "\n"
+	echo -e "\n"
 
 	# Get container IP Address
 	M2_IPADDRESS=$(docker inspect ${CONTAINER_NAME} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
 }
 
 function createConfigFile {
-	echo "\nDownloading config file..."
+	echo -e "\nDownloading config file..."
 	if [ "$MVERSION" -eq "2" ]; then
 		CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
 		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
@@ -127,7 +126,7 @@ function createConfigFile {
 		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
 	fi
 
-	echo "\n"
+	echo -e "\n"
 	read -p "Crypt [783eee839c0396cf398e07e218e89e0a]: " CRYPT
 	if [ -z $CRYPT ]; then
 		CRYPT="783eee839c0396cf398e07e218e89e0a"
@@ -148,12 +147,12 @@ function createConfigFile {
 
 function createMysql {
 	# Stop and Remove existing container
-	echo "\n-------------------------------------"
-	echo "Mysql container response:"
-	echo "-------------------------------------"
+	echo -e "\n-------------------------------------"
+	echo -e "Mysql container response:"
+	echo -e "-------------------------------------"
 	
 	docker start mysql
-	echo "\n"	
+	echo -e "\n"	
 	read -p "Mysql Root Password: " MYSQL_ROOT_PASSWORD
 
 	# Get container IP Address
@@ -167,7 +166,7 @@ function createDatabase {
 
 
 function importDatabase {
-	echo "\nImporting sql file into database..."
+	echo -e "\nImporting sql file into database..."
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
 	if [ "$MVERSION" -eq "2" ]; then
@@ -185,7 +184,7 @@ function importDatabase {
 }
 
 function installMagento {
-	echo "\n"
+	echo -e "\n"
 
 	if [ "$MVERSION" -eq "2" ]; then
 
@@ -197,7 +196,7 @@ function installMagento {
 
 		if [ ! -f ${PROJECT_PATH}/bin/magento ]; then
 			
-			echo "\n"
+			echo -e "\n"
 			rm -rf _src
 
 			read -p "Version Number [2.2.0]: " M2_VERSIONNUM
@@ -239,13 +238,13 @@ function installDB {
 			createMysql
 			createDatabase
 
-			echo "\n"
+			echo -e "\n"
 			read -p "Import database? [Y/n]: " IMPORTDB
 			if [ "$IMPORTDB" = "Y" ]; then
 
-				echo "\n-------------------------------------"
-				echo "Import Database:"
-				echo "-------------------------------------"
+				echo -e "\n-------------------------------------"
+				echo -e "Import Database:"
+				echo -e"-------------------------------------"
 
 				read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
 
@@ -275,10 +274,10 @@ function installDB {
 	fi
 }
 function addHost {
-	echo "\n-------------------------------------"
-	echo "Adding Host Entry:"
-	echo "-------------------------------------"
-	echo "This operation needs super privileges"
+	echo -e "\n-------------------------------------"
+	echo -e "Adding Host Entry:"
+	echo -e "-------------------------------------"
+	echo -e "This operation needs super privileges"
     HOSTS_LINE="$IP $HOST_NAME"
     sudo sed -i "" "/$HOST_NAME/d" $ETC_HOSTS
     sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
@@ -295,16 +294,16 @@ function finish {
 }
 
 function outputData {
-	echo "\n-------------------------------------"
-	echo "Magento IP Address: ${M2_IPADDRESS}"
+	echo -e "\n-------------------------------------"
+	echo -e "Magento IP Address: ${M2_IPADDRESS}"
 	if [ ! $CREATEDB = 0 ]; then
-		echo "MYSQL HOST: ${DB_IPADDRESS}"
-		echo "MYSQL USER: root"
-		echo "MYSQL PASS: ${MYSQL_ROOT_PASSWORD}"
+		echo -e "MYSQL HOST: ${DB_IPADDRESS}"
+		echo -e "MYSQL USER: root"
+		echo -e "MYSQL PASS: ${MYSQL_ROOT_PASSWORD}"
 	fi
-	echo "-------------------------------------"
-	echo "\nFrontend: ${BASE_URL}"
-	echo "-------------------------------------"
+	echo -e "-------------------------------------"
+	echo -e "\nFrontend: ${BASE_URL}"
+	echo -e "-------------------------------------"
 }
 
 ######################################################
@@ -312,13 +311,13 @@ function outputData {
 ######################################################
 
 function usage {
-  echo "Utility for controlling dockerized Magento projects\n"
-  echo "Usage:\n\n  $SCRIPTNAME <action> <arguments...>"
-  echo ""
-  echo "Actions:\n"
+  echo -e "Utility for controlling dockerized Magento projects\n"
+  echo -e "Usage:\n\n  $SCRIPTNAME <action> <arguments...>"
+  echo -e ""
+  echo -e "Actions:\n"
   printf "  %-15s%-30s\n" "install" "Install Magento and MySQL"
   printf "  %-15s%-30s\n" "bash" "Connect to your docker container"
-  echo ""
+  echo -e ""
   printf "  %-15s%-30s\n" "php" "Executes php cli within your project root"
   printf "  %-15s%-30s\n" "composer" "Executes composer within your project root"
   printf "  %-15s%-30s\n" "grunt" "Executes grunt-cli Utility within your project root"
