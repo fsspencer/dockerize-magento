@@ -325,7 +325,7 @@ function usage {
   echo -e "Usage:\n\n  $SCRIPTNAME <action> <arguments...>"
   echo -e ""
   echo -e "Actions:\n"
-  echo -e " " "${BLUE}install${NC}" "\t" "Install Magento and MySQL"
+  echo -e " " "${GREEN}install${NC}" "\t" "Install Magento and MySQL"
   echo -e " " "${GREEN}bash${NC}" "\t\t" "Connect to your docker container"
   echo -e ""
   echo -e " " "${GREEN}php${NC}" "\t\t" "Executes php cli within your project root"
