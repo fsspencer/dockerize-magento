@@ -26,20 +26,32 @@ if [ ! $IS_DOCKERIZED -eq 0 ]; then
 	CONTAINER_NAME="magento${MVERSION}"
 fi
 
-# Check if you have the images. If not
-if [ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]; then
-  docker pull fsspencer/magento
-fi
-if [ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]; then
-  docker pull fsspencer/magento2
-fi
-if [ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]; then
-  docker pull mysql
-fi
-
 ######################################################
 ####		 Functions
 ######################################################
+
+function install {
+	# Check if you have the images. If not
+	if [ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]; then
+	  docker pull fsspencer/magento
+	fi
+	if [ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]; then
+	  docker pull fsspencer/magento2
+	fi
+	if [ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]; then
+	  docker pull mysql
+	fi
+}
+
+function update {
+	echo -e "${BLUE}\n-------------------------------------${NC}"
+	echo -e "${BLUE}Checkinf for updates:${NC}"
+	echo -e "${BLUE}-------------------------------------${NC}"
+
+	docker pull fsspencer/magento
+	docker pull fsspencer/magento2
+	docker pull mysql
+}
 
 function init
  {
@@ -363,6 +375,9 @@ function usage {
   echo -e ""
   echo -e "Actions:\n"
   echo -e " " "${GREEN}install${NC}" "\t" "Install Magento and MySQL"
+  echo -e " " "${GREEN}update${NC}" "\t" "Check for updates"
+  echo -e ""
+  echo -e " " "${GREEN}init${NC}" "\t\t" "Initialize new/existing Magento project"
   echo -e " " "${GREEN}bash${NC}" "\t\t" "Connect to your docker container"
   echo -e ""
   echo -e " " "${GREEN}php${NC}" "\t\t" "Executes php cli within your project root"
@@ -383,6 +398,16 @@ function usage {
 
 case "$1" in
     install)
+    shift 1
+    install
+    ;;
+
+    update)
+    shift 1
+    update
+    ;;
+
+    init)
     shift 1
     start
     installDB

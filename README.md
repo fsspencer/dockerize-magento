@@ -24,11 +24,13 @@ This is a simple bash script that allows you to create a container for a Magento
 
 This will create a dockerize file to your project root directory. You just need to run it:
 
-    ./dockerize
+    ./dockerize install
 
 or
 
-    sh dockerize
+    bash dockerize install
+    
+That will pull the necessary Docker images.
 
 ### Manual
 
@@ -41,6 +43,11 @@ Then reload the configurations to apply the changes:
 	source ~/.bash_profile
 
 Or whatever is your profile file.
+Once you do that, execute the following
+
+	dockerize install
+	
+That will pull the necessary Docker images.
 
 ## Usage
 
@@ -50,6 +57,10 @@ Actions:
 
 >   **install**: *Install Magento and MySQL*
 > 
+>   **update**: *Check for updates*
+> 
+>   **init**: *Initialize Magento project*
+>
 >   **bash**: *Connect to your docker container*
 > 
 >   **php**: *Executes php cli within your project root*
