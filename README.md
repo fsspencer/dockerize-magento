@@ -36,7 +36,7 @@ or
 Open your bash file (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) and append the following line:
 
 ``
-alias dockerize='sh <(curl -s -H "Cache-Control: no-cache" https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize)
+alias dockerize='bash <(curl -s -X GET "https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize?v='$(date +"%s")'")'
 ``
 
 Then reload the configurations to apply the changes:

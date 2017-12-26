@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SCRIPTNAME="dockerize"
 
@@ -7,6 +7,11 @@ IP="0.0.0.0"
 PORT=80
 PROJECT_PATH=$(eval pwd)
 IS_DOCKERIZED=$(eval [ ! -e ${PROJECT_PATH}/.dockerized ]; echo $?)
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
 if [ -z $(eval command -v docker) ]; then
 	"Docker is not installed"
@@ -22,13 +27,13 @@ if [ ! $IS_DOCKERIZED -eq 0 ]; then
 fi
 
 # Check if you have the images. If not
-if [[ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]]; then
+if [ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]; then
   docker pull fsspencer/magento
 fi
-if [[ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]]; then
+if [ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]; then
   docker pull fsspencer/magento2
 fi
-if [[ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]]; then
+if [ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]; then
   docker pull mysql
 fi
 
@@ -48,15 +53,14 @@ function init
 		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
 		MYSQL_ROOT_PASSWORD="root"
 
-		"Setting up mysql..."
+		echo -e "${BLUE}Setting up mysql...${NC}"
 		sleep 5s
 
 		docker start mysql
-		echo "Your current MySQL root password is: $MYSQL_ROOT_PASSWORD" 
-		echo "\n"
+		echo -e "Your current MySQL root password is: $MYSQL_ROOT_PASSWORD\n"
 	fi
 
-	echo "Installation finished"
+	echo "${GREEN}Installation finished${NC}"
 	exit
 }
 
@@ -107,18 +111,18 @@ function start {
 	fi
 
 	# Create and start container
-	echo "\n-------------------------------------"
-	echo "Container creation response:"
-	echo "-------------------------------------"
+	echo -e "${BLUE}\n-------------------------------------${NC}"
+	echo -e "${BLUE}Container creation response:${NC}"
+	echo -e "${BLUE}-------------------------------------${NC}"
 	docker run -d --name $CONTAINER_NAME -v $PROJECT_PATH:/var/www/html -p $PORT:80 $REPO
-	echo "\n"
+	echo -e "\n"
 
 	# Get container IP Address
 	M2_IPADDRESS=$(docker inspect ${CONTAINER_NAME} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
 }
 
 function createConfigFile {
-	echo "\nDownloading config file..."
+	echo -e "${BLUE}\nDownloading config file...${NC}"
 	if [ "$MVERSION" -eq "2" ]; then
 		CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
 		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
@@ -127,7 +131,7 @@ function createConfigFile {
 		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
 	fi
 
-	echo "\n"
+	echo -e "\n"
 	read -p "Crypt [783eee839c0396cf398e07e218e89e0a]: " CRYPT
 	if [ -z $CRYPT ]; then
 		CRYPT="783eee839c0396cf398e07e218e89e0a"
@@ -148,12 +152,12 @@ function createConfigFile {
 
 function createMysql {
 	# Stop and Remove existing container
-	echo "\n-------------------------------------"
-	echo "Mysql container response:"
-	echo "-------------------------------------"
+	echo -e "${BLUE}\n-------------------------------------${NC}"
+	echo -e "${BLUE}Mysql container response:${NC}"
+	echo -e "${BLUE}-------------------------------------${NC}"
 	
 	docker start mysql
-	echo "\n"	
+	echo -e "\n"	
 	read -p "Mysql Root Password: " MYSQL_ROOT_PASSWORD
 
 	# Get container IP Address
@@ -167,7 +171,7 @@ function createDatabase {
 
 
 function importDatabase {
-	echo "\nImporting sql file into database..."
+	echo -e "${BLUE}\nImporting sql file into database...${NC}"
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
 	if [ "$MVERSION" -eq "2" ]; then
@@ -185,7 +189,7 @@ function importDatabase {
 }
 
 function installMagento {
-	echo "\n"
+	echo -e "\n"
 
 	if [ "$MVERSION" -eq "2" ]; then
 
@@ -197,7 +201,7 @@ function installMagento {
 
 		if [ ! -f ${PROJECT_PATH}/bin/magento ]; then
 			
-			echo "\n"
+			echo -e "\n"
 			rm -rf _src
 
 			read -p "Version Number [2.2.0]: " M2_VERSIONNUM
@@ -227,7 +231,7 @@ function installMagento {
 function installDB {
 	if [ $IS_DOCKERIZED -eq 0 ]; then
 
-		read -p "Create database? (Drop of exists) [Y/n]: " CREATEDB	
+		read -p "Create database? (Drop if exists) [Y/n]: " CREATEDB	
 		if [ "$CREATEDB" = "Y" ]; then
 
 			read -p "DB Name?: " DBNAME
@@ -239,13 +243,13 @@ function installDB {
 			createMysql
 			createDatabase
 
-			echo "\n"
+			echo -e "\n"
 			read -p "Import database? [Y/n]: " IMPORTDB
 			if [ "$IMPORTDB" = "Y" ]; then
 
-				echo "\n-------------------------------------"
-				echo "Import Database:"
-				echo "-------------------------------------"
+				echo -e "${BLUE}\n-------------------------------------${NC}"
+				echo -e "${BLUE}Import Database:${NC}"
+				echo -e"${BLUE}-------------------------------------${NC}"
 
 				read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
 
@@ -275,10 +279,10 @@ function installDB {
 	fi
 }
 function addHost {
-	echo "\n-------------------------------------"
-	echo "Adding Host Entry:"
-	echo "-------------------------------------"
-	echo "This operation needs super privileges"
+	echo -e "${BLUE}\n-------------------------------------${NC}"
+	echo -e "${BLUE}Adding Host Entry:${NC}"
+	echo -e "${BLUE}-------------------------------------${NC}"
+	echo -e "${BLUE}This operation needs super privileges${NC}"
     HOSTS_LINE="$IP $HOST_NAME"
     sudo sed -i "" "/$HOST_NAME/d" $ETC_HOSTS
     sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
@@ -295,39 +299,47 @@ function finish {
 }
 
 function outputData {
-	echo "\n-------------------------------------"
-	echo "Magento IP Address: ${M2_IPADDRESS}"
+	echo -e "${GREEN}\n-------------------------------------${NC}"
+	echo -e "${GREEN}Magento IP Address: ${M2_IPADDRESS}${NC}"
 	if [ ! $CREATEDB = 0 ]; then
-		echo "MYSQL HOST: ${DB_IPADDRESS}"
-		echo "MYSQL USER: root"
-		echo "MYSQL PASS: ${MYSQL_ROOT_PASSWORD}"
+		echo -e "${GREEN}MYSQL HOST: ${DB_IPADDRESS}${NC}"
+		echo -e "${GREEN}MYSQL USER: root${NC}"
+		echo -e "${GREEN}MYSQL PASS: ${MYSQL_ROOT_PASSWORD}${NC}"
 	fi
-	echo "-------------------------------------"
-	echo "\nFrontend: ${BASE_URL}"
-	echo "-------------------------------------"
+	echo -e "${GREEN}-------------------------------------${NC}"
+	echo -e "${GREEN}\nFrontend: ${BASE_URL}${NC}"
+	echo -e "${GREEN}-------------------------------------${NC}"
+}
+
+function checkIsRunning {
+    if [ -z $CONTAINER_NAME ]; then
+    	echo -e "${RED}Project is not initialized/started${NC}"
+    	exit 1
+	fi
+}
+
+function usage {
+  echo -e "Utility for controlling dockerized Magento projects\n"
+  echo -e "Usage:\n\n  $SCRIPTNAME <action> <arguments...>"
+  echo -e ""
+  echo -e "Actions:\n"
+  echo -e " " "${BLUE}install${NC}" "\t" "Install Magento and MySQL"
+  echo -e " " "${GREEN}bash${NC}" "\t\t" "Connect to your docker container"
+  echo -e ""
+  echo -e " " "${GREEN}php${NC}" "\t\t" "Executes php cli within your project root"
+  echo -e " " "${GREEN}composer${NC}" "\t" "Executes composer within your project root"
+  echo -e " " "${GREEN}grunt${NC}" "\t" "Executes grunt-cli Utility within your project root"
+  echo -e " " "${GREEN}gulp${NC}" "\t\t" "Executes gulp Utility within your project root"
+  echo -e " " "${GREEN}npm${NC}" "\t\t" "Executes npm within your project root"
+  echo ""
+  echo -e " " "${GREEN}start${NC}" "\t" "Start the server and all of its components"
+  echo -e " " "${GREEN}stop${NC}" "\t\t" "Stop the server"
+  echo ""
 }
 
 ######################################################
 ####		 User Interaction
 ######################################################
-
-function usage {
-  echo "Utility for controlling dockerized Magento projects\n"
-  echo "Usage:\n\n  $SCRIPTNAME <action> <arguments...>"
-  echo ""
-  echo "Actions:\n"
-  printf "  %-15s%-30s\n" "install" "Install Magento and MySQL"
-  printf "  %-15s%-30s\n" "bash" "Connect to your docker container"
-  echo ""
-  printf "  %-15s%-30s\n" "php" "Executes php cli within your project root"
-  printf "  %-15s%-30s\n" "composer" "Executes composer within your project root"
-  printf "  %-15s%-30s\n" "grunt" "Executes grunt-cli Utility within your project root"
-  printf "  %-15s%-30s\n" "gulp" "Executes gulp Utility within your project root"
-  printf "  %-15s%-30s\n" "npm" "Executes npm within your project root"
-  echo ""
-  printf "  %-15s%-30s\n" "start" "Start the server and all of its components"
-  printf "  %-15s%-30s\n" "stop" "Stop the server"
-}
 
 
 case "$1" in
@@ -340,55 +352,37 @@ case "$1" in
 
     php)
     shift 1
-    if [ -z $CONTAINER_NAME ]; then
-    	echo "Project is not initialized/started"
-    	exit 1
-	fi
+    checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME php $*
     ;;
 
     composer)
     shift 1
-    if [ -z $CONTAINER_NAME ]; then
-    	echo "Project is not initialized/started"	
-    	exit 1
-	fi
+    checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME composer $*
     ;;
 
     grunt)
     shift 1
-    if [ -z $CONTAINER_NAME ]; then
-    	echo "Project is not initialized/started"	
-    	exit 1
-	fi
+    checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME grunt $*
     ;;
 
     gulp)
     shift 1
-    if [ -z $CONTAINER_NAME ]; then
-    	echo "Project is not initialized/started"	
-    	exit 1
-	fi
+    checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME gulp $*
     ;;
 
     npm)
     shift 1
-    if [ -z $CONTAINER_NAME ]; then
-    	echo "Project is not initialized/started"	
-    	exit 1
-	fi
+    checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME npm $*
     ;;
 
     bash)
     shift 1
-    if [ -z $CONTAINER_NAME ]; then
-    	echo "Project is not initialized/started"	
-    	exit 1
-	fi
+    checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME bash
     ;;
 
