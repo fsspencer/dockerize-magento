@@ -72,7 +72,7 @@ function stop {
 
 function start {
 
-	docker start mysql
+	docker start mysql &>/dev/null
 
 	if [ -z $MVERSION ]; then
 		read -p "Magento Version [1 or 2]: " MVERSION
@@ -251,7 +251,7 @@ function installDB {
 
 				echo -e "${BLUE}\n-------------------------------------${NC}"
 				echo -e "${BLUE}Import Database:${NC}"
-				echo -e"${BLUE}-------------------------------------${NC}"
+				echo -e "${BLUE}-------------------------------------${NC}"
 
 				read -p "SQL Filename (Must be placed in ${PROJECT_PATH})?: " SQLNAME
 
