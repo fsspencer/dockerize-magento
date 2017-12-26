@@ -139,7 +139,6 @@ function createConfigFile {
 		CRYPT="783eee839c0396cf398e07e218e89e0a"
 	fi
 
-	echo -e "\n"
 	read -p "Table Prefix: " TABLE_PREFIX
 	if [ -z $TABLE_PREFIX ]; then
 		TABLE_PREFIX=" "
