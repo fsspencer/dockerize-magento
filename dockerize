@@ -139,12 +139,19 @@ function createConfigFile {
 		CRYPT="783eee839c0396cf398e07e218e89e0a"
 	fi
 
+	echo -e "\n"
+	read -p "Table Prefix: " TABLE_PREFIX
+	if [ -z $TABLE_PREFIX ]; then
+		TABLE_PREFIX=" "
+	fi
+
 	read -p "Backend Frontname [backend]: " BACKEND_FRONTNAME
 	if [ -z $BACKEND_FRONTNAME ]; then
 		BACKEND_FRONTNAME="backend"
 	fi
 
 	sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+	sed -i '' "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
 	sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
 	sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
 	sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE

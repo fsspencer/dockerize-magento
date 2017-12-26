@@ -14,7 +14,7 @@ return array (
   ),
   'db' => 
   array (
-    'table_prefix' => '',
+    'table_prefix' => 'TBL_PREFIX',
     'connection' => 
     array (
       'default' => 

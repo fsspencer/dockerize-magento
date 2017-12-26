@@ -36,7 +36,7 @@
         <disable_local_modules>false</disable_local_modules>
         <resources>
             <db>
-                <table_prefix><![CDATA[]]></table_prefix>
+                <table_prefix><![CDATA[TBL_PREFIX]]></table_prefix>
             </db>
             <default_setup>
                 <connection>

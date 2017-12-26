@@ -26,7 +26,7 @@ return array (
         'active' => '1',
       ),
     ),
-    'table_prefix' => '',
+    'table_prefix' => 'TBL_PREFIX',
   ),
   'crypt' => 
   array (
