@@ -19,36 +19,32 @@ This is a simple bash script that allows you to create a container for a Magento
 
 ## Installation
 ### Composer
-``
-composer require fsspencer/dockerize-magento
-``
+
+    composer require fsspencer/dockerize-magento
 
 This will create a dockerize file to your project root directory. You just need to run it:
 
-`./dockerize`
+    ./dockerize
 
 or
 
-`sh dockerize`
+    sh dockerize
 
 ### Manual
 
 Open your bash file (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) and append the following line:
 
-``
-alias dockerize='bash <(curl -s -X GET "https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize?v='$(date +"%s")'")'
-``
+	alias dockerize='bash <(curl -s -X GET "https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize?v='$(date +"%s")'")'
 
 Then reload the configurations to apply the changes:
-``
-source ~/.bash_profile
-``
+	
+	source ~/.bash_profile
 
 Or whatever is your profile file.
 
 ## Usage
 
- dockerize <action> <arguments...>
+     dockerize <action> <arguments...>
 
 Actions:
 
@@ -59,6 +55,7 @@ Actions:
 >   **php**: *Executes php cli within your project root*
 >   
 > **composer**: *Executes composer within your project root*
+> 
 >   **grunt**: *Executes grunt-cli Utility within your project root*
 >   
 > **gulp**: *Executes gulp Utility within your project root*
@@ -69,6 +66,9 @@ Actions:
 >   **start**: *Start the server and all of its components*
 > 
 >   **stop**: *Stop the server*
+
+
+**NOTE:** All of this commands will work only for your project root directory. That means that if you want to use, for example, gulp on a specify directory within project project (e.g.: skin/frontend/myvendor/mytheme/) it won't work. In that case, you will need to use the "dockerize bash" command and navigate to that directory and use the gulp command from that place.
 
 ## Magento 1 Usage
 ### New Project
@@ -115,15 +115,11 @@ Whenever you execute `dockerize start` it will stop any magento docker container
 
 If you are using a Magento 1 project
 
-``
-$ docker exec --user www-data -ti magento bash
-``
+	$ docker exec --user www-data -ti magento bash
 
 If you are using a Magento 2 project
 
-``
-$ docker exec --user www-data -ti magento2 bash
-``
+	$ docker exec --user www-data -ti magento2 bash
 
 This will locate you on the `/var/www/html` directory, which is your root dir with permissions for www-data:www-data.
 
@@ -131,24 +127,43 @@ This will locate you on the `/var/www/html` directory, which is your root dir wi
 
 You can perform the following commands
 
-``
-$ docker exec -ti magento mysql -uroot -proot -e "your sql query;"
-``
+	$ docker exec -ti magento mysql -uroot -proot -e "your sql query;"
 
 Or just enter to mysql
 
-``
-$ docker exec -ti magento mysql -uroot -proot
-``
+	$ docker exec -ti magento mysql -uroot -proot
 
 You can also log into the web server and connect directly to mysql from there, generate a mysqldump or wherever you want
 
-``
-$ docker exec -ti magento bash
-``
-``
-$ mysql -h [YOUR MYSQL CONTAINER IP] -uroot -proot
-``
+	$ docker exec -ti magento bash
+	
+	$ mysql -h [YOUR MYSQL CONTAINER IP] -uroot -proot
+
+## Grunt / Gulp
+
+The dockerize command has the ability to work with npm, grunt and gulp for direct usage on the project root directory. It is ideal for Magento 2 usage, since the `Gruntfile.js` and the `package.json`  resides on the root.
+
+But if you want to use those commands on a different directory, you need to connect to your container using the `bash` command first.
+
+*Scenario:* 
+
+ - You have a custom theme that uses Gulp in **Magento 1**. 
+ - Your theme
+   and gulpfile.js resides on skin/frontend/myvendor/mycustomtheme
+
+Follow the next steps:
+
+    $ dockerize bash
+
+
+    # once you are on the magento container
+    
+    $ cd skin/frontend/myvendor/mycustomtheme
+    
+    $ npm install # in order to download the dependencies
+    
+    $ gulp # run gulp with any defined task on your gulpfile.js
+
 
 ## Credits
 - Francis S. Spencer - <francis.s.spencer@gmail.com>
