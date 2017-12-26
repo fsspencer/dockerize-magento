@@ -149,13 +149,23 @@ function createConfigFile {
 		BACKEND_FRONTNAME="backend"
 	fi
 
-	sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
-	sed -i '' "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
-	sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
-	sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
-	sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
-	sed -i '' "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
-	sed -i '' "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+		sed -i '' "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
+		sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
+		sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
+		sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
+		sed -i '' "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
+		sed -i '' "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+	else
+		sed -i "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+		sed -i "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
+		sed -i "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
+		sed -i "s/DB_USER/root/1" $CONFIG_FILE
+		sed -i "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
+		sed -i "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
+		sed -i "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+	fi
 }
 
 function createMysql {
@@ -180,7 +190,14 @@ function createDatabase {
 
 function importDatabase {
 	echo -e "${BLUE}\nImporting sql file into database...${NC}"
-	sed -ie '' 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
+
+	# IF is a mac
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		LC_ALL=C sed -i '' 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
+	else
+		sed -i 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
+	fi
+
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
 
@@ -296,7 +313,13 @@ function addHost {
 	echo -e "${BLUE}-------------------------------------${NC}"
 	echo -e "${BLUE}This operation needs super privileges${NC}"
     HOSTS_LINE="$IP $HOST_NAME"
-    sudo sed -i "" "/$HOST_NAME/d" $ETC_HOSTS
+
+    # if is mac
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+    	sudo sed -i "" "/$HOST_NAME/d" $ETC_HOSTS
+	else
+		sudo sed -i "/$HOST_NAME/d" $ETC_HOSTS
+	fi
     sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
 }
 
@@ -305,7 +328,11 @@ function finish {
 	echo $DOCKERIZED_DATA > $PROJECT_PATH/.dockerized
 
 	if [ -f $PROJECT_PATH/.gitignore ]; then
-		sudo sed -i "" "/\/.dockerized/d" $PROJECT_PATH/.gitignore
+		if [[ "$OSTYPE" == "darwin"* ]]; then
+			sudo sed -i "" "/\/.dockerized/d" $PROJECT_PATH/.gitignore
+		else
+			sudo sed -i "/\/.dockerized/d" $PROJECT_PATH/.gitignore
+		fi
 		echo "/.dockerized" >> $PROJECT_PATH/.gitignore
 	fi
 }
