@@ -180,8 +180,10 @@ function createDatabase {
 
 function importDatabase {
 	echo -e "${BLUE}\nImporting sql file into database...${NC}"
+	sed -ie '' 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
 	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
+
 	if [ "$MVERSION" -eq "2" ]; then
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
