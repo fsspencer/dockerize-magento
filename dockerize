@@ -72,6 +72,8 @@ function stop {
 
 function start {
 
+	docker mysql start
+
 	if [ -z $MVERSION ]; then
 		read -p "Magento Version [1 or 2]: " MVERSION
 		if [ -z "$MVERSION" ]; then
