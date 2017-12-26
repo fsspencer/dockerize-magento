@@ -179,6 +179,7 @@ function importDatabase {
 	if [ "$MVERSION" -eq "2" ]; then
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/cookie/cookie_domain $HOST_NAME
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar cache:clean
 		
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:upgrade
@@ -186,6 +187,7 @@ function importDatabase {
 	else
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun config:set web/unsecure/base_url $BASE_URL
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun config:set web/secure/base_url $BASE_URL
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun config:set web/cookie/cookie_domain $HOST_NAME
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun cache:clean
 	fi
 }
@@ -380,6 +382,12 @@ case "$1" in
     shift 1
     checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME npm $*
+    ;;
+
+    n98)
+    shift 1
+    checkIsRunning
+    docker exec --user www-data -ti $CONTAINER_NAME bash
     ;;
 
     bash)
