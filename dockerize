@@ -153,7 +153,7 @@ function createConfigFile {
 
 	read -p "Table Prefix: " TABLE_PREFIX
 	if [ -z $TABLE_PREFIX ]; then
-		TABLE_PREFIX=" "
+		TABLE_PREFIX=""
 	fi
 
 	read -p "Backend Frontname [backend]: " BACKEND_FRONTNAME
