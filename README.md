@@ -74,6 +74,10 @@ Actions:
 > **npm**: *Executes npm within your project root*
 >   
 > **n98**: *Executes n98-magerun within your project root*
+>   
+> **db:import**: *Imports a .sql file located in the project root*
+>   
+> **db:dump**: *Generates a database file in the project root compressed using gzip*
 > 
 > 
 >   **start**: *Start the server and all of its components*
