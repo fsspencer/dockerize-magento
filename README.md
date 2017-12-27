@@ -72,6 +72,8 @@ Actions:
 > **gulp**: *Executes gulp Utility within your project root*
 >   
 > **npm**: *Executes npm within your project root*
+>   
+> **n98**: *Executes n98-magerun within your project root*
 > 
 > 
 >   **start**: *Start the server and all of its components*

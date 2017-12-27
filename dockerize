@@ -393,6 +393,7 @@ function usage {
   echo -e " " "${GREEN}grunt${NC}" "\t" "Executes grunt-cli Utility within your project root"
   echo -e " " "${GREEN}gulp${NC}" "\t\t" "Executes gulp Utility within your project root"
   echo -e " " "${GREEN}npm${NC}" "\t\t" "Executes npm within your project root"
+  echo -e " " "${GREEN}n98${NC}" "\t\t" "Executes n98-magerun within your project root"
   echo ""
   echo -e " " "${GREEN}start${NC}" "\t" "Start the server and all of its components"
   echo -e " " "${GREEN}stop${NC}" "\t\t" "Stop the server"
@@ -420,6 +421,12 @@ case "$1" in
     start
     installDB
     outputData
+    ;;
+
+    bash)
+    shift 1
+    checkIsRunning
+    docker exec --user www-data -ti $CONTAINER_NAME bash
     ;;
 
     php)
@@ -455,13 +462,7 @@ case "$1" in
     n98)
     shift 1
     checkIsRunning
-    docker exec --user www-data -ti $CONTAINER_NAME bash
-    ;;
-
-    bash)
-    shift 1
-    checkIsRunning
-    docker exec --user www-data -ti $CONTAINER_NAME bash
+    docker exec --user www-data -ti $CONTAINER_NAME n98
     ;;
 
     start)
