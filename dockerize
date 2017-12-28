@@ -7,7 +7,7 @@ IP="0.0.0.0"
 PORT=80
 NETWORK_NAME="dockerizenet"
 PROJECT_PATH=$(eval pwd)
-HOME_PATH="~/.dockerize"
+DOCKERIZE_PATH=".dockerize"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,73 +20,59 @@ if [ -z $(eval command -v docker) ]; then
 fi
 
 if [ ! -z $(eval command -v md5sum) ]; then
-	PROJECT_PATH_MD5=$(eval $PROJECT_PATH | md5sum)
+	PROJECT_PATH_MD5=$(echo $PROJECT_PATH | md5sum)
 elif [ ! -z $(eval command -v md5) ]; then
-	PROJECT_PATH_MD5=$(eval $PROJECT_PATH | md5)
+	PROJECT_PATH_MD5=$(echo $PROJECT_PATH | md5)
 else
 	echo "Md5 is not installed"
 	exit 1
 fi
 
-if [ ! -d "$HOME_PATH" ]; then
-	mkdir -p $HOME_PATH
+if [ ! -d ~/$DOCKERIZE_PATH ]; then
+	mkdir -p ~/$DOCKERIZE_PATH
 fi
 
 # Check if locally dockerized
 if [ -e $PROJECT_PATH/.dockerized ]; then
-	mv $PROJECT_PATH/.dockerized ${HOME_PATH}/${PROJECT_PATH_MD5}
+	mv $PROJECT_PATH/.dockerized ~/$DOCKERIZE_PATH/${PROJECT_PATH_MD5}
 fi
 
-IS_DOCKERIZED=$(eval [ ! -e ${HOME_PATH}/${PROJECT_PATH_MD5} ]; echo $?)
+IS_DOCKERIZED=$(eval [ ! -e ~/$DOCKERIZE_PATH/$PROJECT_PATH_MD5 ]; echo $?)
 
 # Check if is dockerized
 if [ ! $IS_DOCKERIZED -eq 0 ]; then
-	HOST_NAME=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["HOST_NAME"]')
-	MVERSION=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MVERSION"]')
-	MAGE_TYPE=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MAGE_TYPE"]')
+	HOST_NAME=$(cat ~/$DOCKERIZE_PATH/$PROJECT_PATH_MD5 | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["HOST_NAME"]')
+	MVERSION=$(cat ~/$DOCKERIZE_PATH/$PROJECT_PATH_MD5 | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MVERSION"]')
+	MAGE_TYPE=$(cat ~/$DOCKERIZE_PATH/$PROJECT_PATH_MD5 | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MAGE_TYPE"]')
+	BASE_URL=http://$HOST_NAME/
 	CONTAINER_NAME="magento${MVERSION}"
 fi
 
 
 # Creates dockerized network if doesnt exists
-createNet
+if [ ! "$(docker network ls | grep $NETWORK_NAME)" ]; then
+	docker network create --subnet=172.77.0.0/16 $NETWORK_NAME
+fi
+
+# Get container IP Address
+DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["Networks"]["'${NETWORK_NAME}'"]["IPAddress"]')
 
 ######################################################
 ####		 Functions
 ######################################################
 
 function install {
-	# Check if you have the images. If not
-	if [ "$(docker images -q fsspencer/magento:latest 2> /dev/null)" == "" ]; then
-	  docker pull fsspencer/magento
-	fi
-	if [ "$(docker images -q fsspencer/magento2:latest 2> /dev/null)" == "" ]; then
-	  docker pull fsspencer/magento2
-	fi
-	if [ "$(docker images -q mysql:latest 2> /dev/null)" == "" ]; then
-	  docker pull mysql
-	fi
-}
-
-function update {
 	echo -e "${BLUE}\n-------------------------------------${NC}"
-	echo -e "${BLUE}Checkinf for updates:${NC}"
+	echo -e "${BLUE}Installing containers:${NC}"
 	echo -e "${BLUE}-------------------------------------${NC}"
 
-	docker pull fsspencer/magento
-	docker pull fsspencer/magento2
-	docker pull mysql
-}
-
-function init
- {
  	docker pull fsspencer/magento
  	docker pull fsspencer/magento2
  	docker pull mysql
 
 	if [ ! "$(docker ps -a | grep mysql)" ]; then
 		# Create and start container
-		docker stop $(docker ps | grep "3306/tcp")
+		docker stop $(docker ps | grep "3306/tcp") &> /dev/null
 		docker run --net $NETWORK_NAME -d -ti -e MYSQL_ROOT_PASSWORD="root" --ip 172.77.0.2 -p 3306:3306 --name mysql mysql
 		MYSQL_ROOT_PASSWORD="root"
 
@@ -97,14 +83,18 @@ function init
 		echo -e "Your current MySQL root password is: $MYSQL_ROOT_PASSWORD\n"
 	fi
 
-	echo "${GREEN}Installation finished${NC}"
+	echo -e "${GREEN}Installation finished${NC}"
 	exit
 }
 
-function createNet {
-	if [ ! "$(docker network ls | grep $NETWORK_NAME)" ]; then
-		docker network create --subnet=172.77.0.0/16 $NETWORK_NAME
-	fi
+function update {
+	echo -e "${BLUE}\n-------------------------------------${NC}"
+	echo -e "${BLUE}Checking for updates:${NC}"
+	echo -e "${BLUE}-------------------------------------${NC}"
+
+	docker pull fsspencer/magento
+	docker pull fsspencer/magento2
+	docker pull mysql
 }
 
 function stop {
@@ -209,6 +199,8 @@ function createConfigFile {
 		sed -i "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
 		sed -i "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
 	fi
+
+	rm -rf $PROJECT_PATH/var/cache/*
 }
 
 function createMysql {
@@ -220,16 +212,7 @@ function createMysql {
 	docker start mysql
 	echo -e "\n"	
 	read -p "Mysql Root Password: " MYSQL_ROOT_PASSWORD
-
-	# Get container IP Address
-	DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0]["NetworkSettings"]["IPAddress"]')
 }
-
-
-function createDatabase {
-	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE IF EXISTS ${DBNAME}; CREATE DATABASE ${DBNAME};"
-}
-
 
 function importDatabase {
 	echo -e "${BLUE}\nImporting sql file into database...${NC}"
@@ -267,6 +250,55 @@ function importDatabase {
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun cache:clean
 	fi
 }
+
+function dbImport {
+	read -p "SQL Filename (Must be placed in project root)?: " SQLNAME
+	docker exec --user www-data -ti $CONTAINER_NAME n98 db:import --drop $SQLNAME 
+}
+
+function dbDump {
+	read -p "SQL Filename (Will be generated in project root)?: " SQLNAME
+	docker exec --user www-data -ti $CONTAINER_NAME n98 db:dump --compression="gzip" $SQLNAME 
+}
+
+function dbCreate {
+	read -p "DB Name?: " DBNAME
+	if [ -z ${DBNAME} ]; then
+	  echo "You need to specify a database name"
+	  exit 1
+	fi
+
+	createMysql
+	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE IF EXISTS ${DBNAME}; CREATE DATABASE ${DBNAME};"
+
+	echo -e "\n"
+	read -p "Import database? [Y/n]: " IMPORTDB
+	if [ "$IMPORTDB" = "Y" ]; then
+
+		echo -e "${BLUE}\n-------------------------------------${NC}"
+		echo -e "${BLUE}Import Database:${NC}"
+		echo -e "${BLUE}-------------------------------------${NC}"
+
+		read -p "SQL Filename (Must be placed in project root)?: " SQLNAME
+
+		if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
+	  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
+	  	  exit 1
+		fi
+
+		createConfigFile
+		importDatabase
+	else
+		
+		if [ "$MVERSION" -eq "2" ]; then
+			read -p "Install Magento? [Y/n]: " INSTALLMAGE
+			if [ "$INSTALLMAGE" = "Y" ]; then
+				installMagento
+			fi
+		fi
+	fi
+}
+
 
 function installMagento {
 	echo -e "\n"
@@ -313,42 +345,7 @@ function installDB {
 
 		read -p "Create database? (Drop if exists) [Y/n]: " CREATEDB	
 		if [ "$CREATEDB" = "Y" ]; then
-
-			read -p "DB Name?: " DBNAME
-			if [ -z ${DBNAME} ]; then
-			  echo "You need to specify a database name"
-			  exit 1
-			fi
-
-			createMysql
-			createDatabase
-
-			echo -e "\n"
-			read -p "Import database? [Y/n]: " IMPORTDB
-			if [ "$IMPORTDB" = "Y" ]; then
-
-				echo -e "${BLUE}\n-------------------------------------${NC}"
-				echo -e "${BLUE}Import Database:${NC}"
-				echo -e "${BLUE}-------------------------------------${NC}"
-
-				read -p "SQL Filename (Must be placed in project root)?: " SQLNAME
-
-				if [ ! -f ${PROJECT_PATH}/${SQLNAME} ]; then
-			  	  echo "${PROJECT_PATH}/${SQLNAME} File not found!"
-			  	  exit 1
-				fi
-
-				createConfigFile
-				importDatabase
-			else
-				
-				if [ "$MVERSION" -eq "2" ]; then
-					read -p "Install Magento? [Y/n]: " INSTALLMAGE
-					if [ "$INSTALLMAGE" = "Y" ]; then
-						installMagento
-					fi
-				fi
-			fi
+			dbCreate
 		else
 			CREATEDB=0
 		fi
@@ -373,18 +370,10 @@ function addHost {
 	fi
     sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
 }
-function dbImport {
-	read -p "SQL Filename (Must be placed in project root)?: " SQLNAME
-	docker exec --user www-data -ti $CONTAINER_NAME n98 db:import --drop $SQLNAME 
-}
-function dbDump {
-	read -p "SQL Filename (Will be generated in project root)?: " SQLNAME
-	docker exec --user www-data -ti $CONTAINER_NAME n98 db:dump --compression="gzip" $SQLNAME 
-}
 
 function finish {
 	DOCKERIZED_DATA="{\"HOST_NAME\":\""$HOST_NAME"\",\"MVERSION\":\""$MVERSION"\",\"MAGE_TYPE\":\""$MAGE_TYPE"\"}"
-	echo $DOCKERIZED_DATA > $PROJECT_PATH_MD5
+	echo $DOCKERIZED_DATA > ~/$DOCKERIZE_PATH/$PROJECT_PATH_MD5
 }
 
 function outputData {
@@ -427,6 +416,7 @@ function usage {
   echo -e " " "${GREEN}n98${NC}" "\t\t" "Executes n98-magerun within your project root"
   echo ""
   echo "Database:"
+  echo -e " " "${GREEN}db:create${NC}" "\t" "Creates new database"
   echo -e " " "${GREEN}db:import${NC}" "\t" "Imports a specified .sql file into the database"
   echo -e " " "${GREEN}db:dump${NC}" "\t" "Generates a database file in the project root compressed using gzip"
   echo ""
@@ -499,6 +489,12 @@ case "$1" in
     shift 1
     checkIsRunning
     docker exec --user www-data -ti $CONTAINER_NAME n98
+    ;;
+
+    db:create)
+    shift 1
+    checkIsRunning
+    dbCreate
     ;;
 
     db:import)
