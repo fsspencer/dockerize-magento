@@ -7,7 +7,7 @@ IP="0.0.0.0"
 PORT=80
 NETWORK_NAME="dockerizenet"
 PROJECT_PATH=$(eval pwd)
-IS_DOCKERIZED=$(eval [ ! -e ${PROJECT_PATH}/.dockerized ]; echo $?)
+HOME_PATH="~/.dockerize"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,12 +15,29 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 if [ -z $(eval command -v docker) ]; then
-	"Docker is not installed"
+	echo "Docker is not installed"
 	exit 1
 fi
 
-# Creates dockerized network if doesnt exists
-createNet
+if [ ! -z $(eval command -v md5sum) ]; then
+	PROJECT_PATH_MD5=$(eval $PROJECT_PATH | md5sum)
+elif [ ! -z $(eval command -v md5) ]; then
+	PROJECT_PATH_MD5=$(eval $PROJECT_PATH | md5)
+else
+	echo "Md5 is not installed"
+	exit 1
+fi
+
+if [ ! -d "$HOME_PATH" ]; then
+	mkdir -p $HOME_PATH
+fi
+
+# Check if locally dockerized
+if [ -e $PROJECT_PATH/.dockerized ]; then
+	mv $PROJECT_PATH/.dockerized ${HOME_PATH}/${PROJECT_PATH_MD5}
+fi
+
+IS_DOCKERIZED=$(eval [ ! -e ${HOME_PATH}/${PROJECT_PATH_MD5} ]; echo $?)
 
 # Check if is dockerized
 if [ ! $IS_DOCKERIZED -eq 0 ]; then
@@ -29,6 +46,10 @@ if [ ! $IS_DOCKERIZED -eq 0 ]; then
 	MAGE_TYPE=$(cat .dockerized | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["MAGE_TYPE"]')
 	CONTAINER_NAME="magento${MVERSION}"
 fi
+
+
+# Creates dockerized network if doesnt exists
+createNet
 
 ######################################################
 ####		 Functions
@@ -363,16 +384,7 @@ function dbDump {
 
 function finish {
 	DOCKERIZED_DATA="{\"HOST_NAME\":\""$HOST_NAME"\",\"MVERSION\":\""$MVERSION"\",\"MAGE_TYPE\":\""$MAGE_TYPE"\"}"
-	echo $DOCKERIZED_DATA > $PROJECT_PATH/.dockerized
-
-	if [ -f $PROJECT_PATH/.gitignore ]; then
-		if [[ "$OSTYPE" == "darwin"* ]]; then
-			sudo sed -i "" "/\/.dockerized/d" $PROJECT_PATH/.gitignore
-		else
-			sudo sed -i "/\/.dockerized/d" $PROJECT_PATH/.gitignore
-		fi
-		echo "/.dockerized" >> $PROJECT_PATH/.gitignore
-	fi
+	echo $DOCKERIZED_DATA > $PROJECT_PATH_MD5
 }
 
 function outputData {
