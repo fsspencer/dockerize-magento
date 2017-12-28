@@ -74,6 +74,8 @@ Actions:
 > **npm**: *Executes npm within your project root*
 >   
 > **n98**: *Executes n98-magerun within your project root*
+>
+> **db:create**: *Creates new database*
 >   
 > **db:import**: *Imports a .sql file located in the project root*
 >   
@@ -83,6 +85,8 @@ Actions:
 >   **start**: *Start the server and all of its components*
 > 
 >   **stop**: *Stop the server*
+>
+>   **remove**: *Removes local dockerize configuration*
 
 
 **NOTE:** All of this commands will work only for your project root directory. That means that if you want to use, for example, gulp on a specify directory within project project (e.g.: skin/frontend/myvendor/mytheme/) it won't work. In that case, you will need to use the "dockerize bash" command and navigate to that directory and use the gulp command from that place.
@@ -122,11 +126,13 @@ Actions:
 6. Select `create new database` and `import database` when the script asks. This will create your env.php file, set your store URL and the rest
 
 ## Switching Between Projects
-The `dockerize start` command will create a new .dockerized file into your project root directory. Make sure to not commit that file to your repository.
+The `dockerize start` command will create a new config file inside ~/.dockerize directory.
 
 That file will save some configuration parameters after you initialized the project for the first time, in order to prevent to execute the whole process twice.
 
 Whenever you execute `dockerize start` it will stop any magento docker container and initialize a new one with the current project.
+
+If you want to reset the project dockerize configuration, you need to execute `dockerize remove` within your Magento root directory.
 
 ## Access to Web Server
 
