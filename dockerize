@@ -5,6 +5,7 @@ SCRIPTNAME="dockerize"
 ETC_HOSTS=/etc/hosts
 IP="0.0.0.0"
 PORT=80
+NETWORK_NAME="dockerizenet"
 PROJECT_PATH=$(eval pwd)
 IS_DOCKERIZED=$(eval [ ! -e ${PROJECT_PATH}/.dockerized ]; echo $?)
 
@@ -17,6 +18,9 @@ if [ -z $(eval command -v docker) ]; then
 	"Docker is not installed"
 	exit 1
 fi
+
+# Creates dockerized network if doesnt exists
+createNet
 
 # Check if is dockerized
 if [ ! $IS_DOCKERIZED -eq 0 ]; then
@@ -62,7 +66,7 @@ function init
 	if [ ! "$(docker ps -a | grep mysql)" ]; then
 		# Create and start container
 		docker stop $(docker ps | grep "3306/tcp")
-		docker run -d -ti -e MYSQL_ROOT_PASSWORD="root" -p 3306:3306 --name mysql mysql
+		docker run --net $NETWORK_NAME -d -ti -e MYSQL_ROOT_PASSWORD="root" --ip 172.77.0.2 -p 3306:3306 --name mysql mysql
 		MYSQL_ROOT_PASSWORD="root"
 
 		echo -e "${BLUE}Setting up mysql...${NC}"
@@ -74,6 +78,12 @@ function init
 
 	echo "${GREEN}Installation finished${NC}"
 	exit
+}
+
+function createNet {
+	if [ ! "$(docker network ls | grep $NETWORK_NAME)" ]; then
+		docker network create --subnet=172.77.0.0/16 $NETWORK_NAME
+	fi
 }
 
 function stop {
@@ -128,7 +138,7 @@ function start {
 	echo -e "${BLUE}\n-------------------------------------${NC}"
 	echo -e "${BLUE}Container creation response:${NC}"
 	echo -e "${BLUE}-------------------------------------${NC}"
-	docker run -d --name $CONTAINER_NAME -v $PROJECT_PATH:/var/www/html -p $PORT:80 $REPO
+	docker run --net $NETWORK_NAME -d --name $CONTAINER_NAME -v $PROJECT_PATH:/var/www/html --ip 172.77.0.3 -p $PORT:80 $REPO
 	echo -e "\n"
 
 	# Get container IP Address
