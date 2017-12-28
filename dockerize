@@ -137,7 +137,6 @@ function start {
 	fi
 	BASE_URL=http://${HOST_NAME}/
 
-	stop 
 
 	if [ "$MVERSION" -eq "1" ]; then
 		REPO=fsspencer/magento
