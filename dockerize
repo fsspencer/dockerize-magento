@@ -423,6 +423,7 @@ function usage {
   echo "Docker:"
   echo -e " " "${GREEN}start${NC}" "\t" "Start the server and all of its components"
   echo -e " " "${GREEN}stop${NC}" "\t\t" "Stop the server"
+  echo -e " " "${GREEN}remove${NC}" "\t" "Remove dockerize local config"
   echo ""
 }
 
@@ -516,6 +517,10 @@ case "$1" in
 
     stop)
     stop
+    ;;
+
+    remove)
+    rm ~/$DOCKERIZE_PATH/$PROJECT_PATH_MD5
     ;;
 
     *)
