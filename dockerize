@@ -198,6 +198,8 @@ function createConfigFile {
 		if [ -f ${PROJECT_PATH}/app/etc/config.php ]; then
 			CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
 			curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
+
+			replaceConfigValues
 		else
 			# if not, install magento
 			if [ ! "$TABLE_PREFIX" == "" ]; then
@@ -233,26 +235,31 @@ function createConfigFile {
 		CONFIG_FILE=$PROJECT_PATH/app/etc/local.xml
 		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
 
-		if [[ "$OSTYPE" == "darwin"* ]]; then
-			sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
-			sed -i '' "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
-			sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
-			sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
-			sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
-			sed -i '' "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
-			sed -i '' "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
-		else
-			sed -i "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
-			sed -i "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
-			sed -i "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
-			sed -i "s/DB_USER/root/1" $CONFIG_FILE
-			sed -i "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
-			sed -i "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
-			sed -i "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
-		fi
+		replaceConfigValues
 	fi
 
 	rm -rf $PROJECT_PATH/var/cache/*
+}
+
+function replaceConfigValues {
+
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+		sed -i '' "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
+		sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
+		sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
+		sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
+		sed -i '' "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
+		sed -i '' "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+	else
+		sed -i "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+		sed -i "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
+		sed -i "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
+		sed -i "s/DB_USER/root/1" $CONFIG_FILE
+		sed -i "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
+		sed -i "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
+		sed -i "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+	fi
 }
 
 function createMysql {
