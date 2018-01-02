@@ -281,7 +281,16 @@ function importDatabase {
 	echo -e "${BLUE}\nSetting up Magento configurations${NC}"
 
 	if [ "$MVERSION" -eq "2" ]; then
-
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/cookie/cookie_domain $HOST_NAME
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/js/merge_files 0
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/js/enable_js_bundling 0
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/js/minify_files 0
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/css/merge_css_files 0
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/css/minify_files 0
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/static/sign 0
+		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar cache:clean
 		
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:upgrade
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento cache:clean
