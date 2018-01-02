@@ -158,15 +158,17 @@ function start {
 }
 
 function deploymentScript {
-	read -p "Do you have a deployment script? [Y/n]: " HAS_DEPLOYMENT_SCRIPT
-	if [ "$HAS_DEPLOYMENT_SCRIPT" = "Y" ]; then
-		read -p "Deployment script location (relative path + filename): " DEPLOYMENT_SCRIPT
+	if [ $IS_DOCKERIZED -eq 0 ]; then
+		read -p "Do you have a deployment script? [Y/n]: " HAS_DEPLOYMENT_SCRIPT
+		if [ "$HAS_DEPLOYMENT_SCRIPT" = "Y" ]; then
+			read -p "Deployment script location (relative path + filename): " DEPLOYMENT_SCRIPT
 
-		echo -e "${BLUE}\n-------------------------------------${NC}"
-		echo -e "${BLUE}Deployment script:${NC}"
-		echo -e "${BLUE}-------------------------------------${NC}"
+			echo -e "${BLUE}\n-------------------------------------${NC}"
+			echo -e "${BLUE}Deployment script:${NC}"
+			echo -e "${BLUE}-------------------------------------${NC}"
 
-		docker exec -ti $CONTAINER_NAME sh $DEPLOYMENT_SCRIPT 
+			docker exec -ti $CONTAINER_NAME sh $DEPLOYMENT_SCRIPT 
+		fi
 	fi
 }
 
