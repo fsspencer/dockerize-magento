@@ -167,21 +167,15 @@ function deploymentScript {
 			echo -e "${BLUE}Deployment script:${NC}"
 			echo -e "${BLUE}-------------------------------------${NC}"
 
-			docker exec -ti $CONTAINER_NAME sh $DEPLOYMENT_SCRIPT 
+			docker exec --user www-data -ti $CONTAINER_NAME sh $DEPLOYMENT_SCRIPT 
 		fi
 	fi
 }
 
 function createConfigFile {
-	echo -e "${BLUE}\nDownloading config file...${NC}"
-	if [ "$MVERSION" -eq "2" ]; then
-		CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
-		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
-	else
-		CONFIG_FILE=$PROJECT_PATH/app/etc/local.xml
-		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
-	fi
 
+	echo -e "${BLUE}\nDownloading config file...${NC}"
+	
 	echo -e "\n"
 	read -p "Crypt [783eee839c0396cf398e07e218e89e0a]: " CRYPT
 	if [ -z $CRYPT ]; then
@@ -198,22 +192,64 @@ function createConfigFile {
 		BACKEND_FRONTNAME="backend"
 	fi
 
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
-		sed -i '' "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
-		sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
-		sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
-		sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
-		sed -i '' "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
-		sed -i '' "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+	if [ "$MVERSION" -eq "2" ]; then
+
+		# If config.php exists, download an env.php template
+		if [ -f ${PROJECT_PATH}/app/etc/config.php ]; then
+			CONFIG_FILE=$PROJECT_PATH/app/etc/env.php
+			curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m2/${MAGE_TYPE}/env.php > $CONFIG_FILE
+		else
+			# if not, install magento
+			if [ ! "$TABLE_PREFIX" == "" ]; then
+				docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:install \
+					--db-host="$DB_IPADDRESS" \
+					--db-user="root" \
+					--db-password="$MYSQL_ROOT_PASSWORD" \
+					--db-name="$DBNAME" \
+					--db-prefix="$TABLE_PREFIX" \
+					--admin-user="admin" \
+					--admin-password="admin123" \
+					--admin-firstname="Admin" \
+					--admin-lastname="Web" \
+					--admin-email="admin@sample.com" \
+					--base-url="$BASE_URL" \
+					--use-rewrites=1
+			else
+				docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:install \
+					--db-host="$DB_IPADDRESS" \
+					--db-user="root" \
+					--db-password="$MYSQL_ROOT_PASSWORD" \
+					--db-name="$DBNAME" \
+					--admin-user="admin" \
+					--admin-password="admin123" \
+					--admin-firstname="Admin" \
+					--admin-lastname="Web" \
+					--admin-email="admin@sample.com" \
+					--base-url="$BASE_URL" \
+					--use-rewrites=1
+			fi
+		fi
 	else
-		sed -i "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
-		sed -i "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
-		sed -i "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
-		sed -i "s/DB_USER/root/1" $CONFIG_FILE
-		sed -i "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
-		sed -i "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
-		sed -i "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+		CONFIG_FILE=$PROJECT_PATH/app/etc/local.xml
+		curl -k https://raw.githubusercontent.com/fsspencer/dockerize-magento/master/config/m1/local.xml.sample > $CONFIG_FILE
+
+		if [[ "$OSTYPE" == "darwin"* ]]; then
+			sed -i '' "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+			sed -i '' "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
+			sed -i '' "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
+			sed -i '' "s/DB_USER/root/1" $CONFIG_FILE
+			sed -i '' "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
+			sed -i '' "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
+			sed -i '' "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+		else
+			sed -i "s/CRYPT/${CRYPT}/1" $CONFIG_FILE
+			sed -i "s/TBL_PREFIX/${TABLE_PREFIX}/1" $CONFIG_FILE
+			sed -i "s/DB_HOST/${DB_IPADDRESS}/1" $CONFIG_FILE
+			sed -i "s/DB_USER/root/1" $CONFIG_FILE
+			sed -i "s/DB_PASSWORD/${MYSQL_ROOT_PASSWORD}/1" $CONFIG_FILE
+			sed -i "s/DB_NAME/${DBNAME}/1" $CONFIG_FILE
+			sed -i "s/BACKEND_FRONTNAME/backend/1" $CONFIG_FILE
+		fi
 	fi
 
 	rm -rf $PROJECT_PATH/var/cache/*
@@ -238,20 +274,14 @@ function importDatabase {
 		sed -i 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
 	fi
 
-	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
-	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
+	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
+	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
+
+	echo -e "${BLUE}\nDB Import process finished${NC}"
+	echo -e "${BLUE}\nSetting up Magento configurations${NC}"
 
 	if [ "$MVERSION" -eq "2" ]; then
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/unsecure/base_url $BASE_URL
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/secure/base_url $BASE_URL
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set web/cookie/cookie_domain $HOST_NAME
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/js/merge_files 0
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/js/enable_js_bundling 0
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/js/minify_files 0
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/css/merge_css_files 0
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/css/minify_files 0
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/static/sign 0
-		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar cache:clean
+
 		
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:upgrade
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento cache:clean
@@ -263,6 +293,7 @@ function importDatabase {
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun config:set dev/css/merge_css_files 0
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun cache:clean
 	fi
+	echo -e "${BLUE}\nFinished Setting up Magento configurations${NC}"
 }
 
 function dbImport {
@@ -283,7 +314,7 @@ function dbCreate {
 	fi
 
 	createMysql
-	docker exec -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE IF EXISTS ${DBNAME}; CREATE DATABASE ${DBNAME};"
+	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "DROP DATABASE IF EXISTS ${DBNAME}; CREATE DATABASE ${DBNAME};"
 
 	echo -e "\n"
 	read -p "Import database? [Y/n]: " IMPORTDB
