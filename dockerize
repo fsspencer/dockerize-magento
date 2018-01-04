@@ -474,6 +474,7 @@ function usage {
   echo -e " " "${GREEN}grunt${NC}" "\t" "Executes grunt-cli Utility within your project root"
   echo -e " " "${GREEN}gulp${NC}" "\t\t" "Executes gulp Utility within your project root"
   echo -e " " "${GREEN}npm${NC}" "\t\t" "Executes npm within your project root"
+  echo -e " " "${GREEN}mysql${NC}" "\t\t" "Connect to the MySQL client server"
   echo -e " " "${GREEN}n98${NC}" "\t\t" "Executes n98-magerun within your project root"
   echo ""
   echo "Database:"
@@ -548,10 +549,16 @@ case "$1" in
     docker exec --user www-data -ti $CONTAINER_NAME npm $*
     ;;
 
+    mysql)
+    shift 1
+    checkIsRunning
+    docker exec -ti mysql mysql -uroot -p$MYSQL_ROOT_PASSWORD $*
+    ;;
+
     n98)
     shift 1
     checkIsRunning
-    docker exec --user www-data -ti $CONTAINER_NAME n98
+    docker exec --user www-data -ti $CONTAINER_NAME n98 $*
     ;;
 
     db:create)

@@ -73,6 +73,8 @@ Actions:
 >   
 > **npm**: *Executes npm within your project root*
 >   
+> **mysql**: *Executes Connect to the MySQL client server*
+>   
 > **n98**: *Executes n98-magerun within your project root*
 >
 > **db:create**: *Creates new database*
