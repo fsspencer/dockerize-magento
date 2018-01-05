@@ -76,6 +76,8 @@ Actions:
 > **mysql**: *Executes Connect to the MySQL client server*
 >   
 > **n98**: *Executes n98-magerun within your project root*
+>   
+> **magento**: *Executes Magento 2 command line tool (e.g: dockerize magento setup:upgrade)*
 >
 > **db:create**: *Creates new database*
 >   
