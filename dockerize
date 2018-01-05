@@ -553,7 +553,7 @@ case "$1" in
     mysql)
     shift 1
     checkIsRunning
-    docker exec --user www-data -ti $CONTAINER_NAME mysql -uroot -p$MYSQL_ROOT_PASSWORD $*
+    docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -p$MYSQL_ROOT_PASSWORD $*
     ;;
 
     n98)
@@ -562,7 +562,7 @@ case "$1" in
     docker exec --user www-data -ti $CONTAINER_NAME n98 $*
     ;;
 
-    n98)
+    magento)
     shift 1
     checkIsRunning
     if [ -f ${PROJECT_PATH}/bin/magento ]; then
