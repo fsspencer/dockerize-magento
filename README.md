@@ -55,42 +55,31 @@ That will pull the necessary Docker images.
 
 Actions:
 
->   **install**: *Install Magento and MySQL*
-> 
->   **update**: *Check for updates*
-> 
->   **init**: *Initialize Magento project*
->
->   **bash**: *Connect to your docker container*
-> 
->   **php**: *Executes php cli within your project root*
->   
-> **composer**: *Executes composer within your project root*
-> 
->   **grunt**: *Executes grunt-cli Utility within your project root*
->   
-> **gulp**: *Executes gulp Utility within your project root*
->   
-> **npm**: *Executes npm within your project root*
->   
-> **mysql**: *Executes Connect to the MySQL client server*
->   
-> **n98**: *Executes n98-magerun within your project root*
->   
-> **magento**: *Executes Magento 2 command line tool (e.g: dockerize magento setup:upgrade)*
->
-> **db:create**: *Creates new database*
->   
-> **db:import**: *Imports a .sql file located in the project root*
->   
-> **db:dump**: *Generates a database file in the project root compressed using gzip*
-> 
-> 
->   **start**: *Start the server and all of its components*
-> 
->   **stop**: *Stop the server*
->
->   **remove**: *Removes local dockerize configuration*
+| Command | Description |
+| ------- | ----------- |
+||
+| **install** | *Install Magento and MySQL* |
+| **update** | *Check for updates* |
+||
+| **init** | *Initialize Magento project* |
+| **bash** | *Connect to your docker container* |
+||
+| **php** | *Executes php cli within your project root* |
+| **composer** | *Executes composer within your project root* |
+| **grunt** | *Executes grunt-cli Utility within your project root* |
+| **gulp** | *Executes gulp Utility within your project root* |
+| **npm** | *Executes npm within your project root* |
+| **mysql** |  *Executes Connect to the MySQL client server* |
+| **n98** | *Executes n98-magerun within your project root* |
+| **magento** | *Executes Magento 2 command line tool (e.g: dockerize magento setup:upgrade)* |
+||
+| **db:create** | *Creates new database* |
+| **db:import** | *Imports a .sql file located in the project root* |
+| **db:dump** | *Generates a database file in the project root compressed using gzip* |
+||
+| **start** | *Start the server and all of its components* |
+| **stop** | *Stop the server* |
+| **remove** | *Removes local dockerize configuration* |
 
 
 **NOTE:** All of this commands will work only for your project root directory. That means that if you want to use, for example, gulp on a specify directory within project project (e.g.: skin/frontend/myvendor/mytheme/) it won't work. In that case, you will need to use the "dockerize bash" command and navigate to that directory and use the gulp command from that place.
