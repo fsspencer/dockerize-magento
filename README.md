@@ -191,6 +191,7 @@ Follow the next steps:
     
 ## Known Issues
 - `ERROR 3167 (HY000) at line XX: The 'INFORMATION_SCHEMA.SESSION VARIABLES' feature is disabled; see documentation for 'show_compatibility_56`
+	
 	**Solution:** Enter to your mysql server `$ dockerize mysql`, and execute the following query `set @@global.show_compatibility_56=ON;`. Then try to perform your action again and the error should be gone.
 
 
