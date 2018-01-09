@@ -18,7 +18,7 @@ This is a simple bash script that allows you to create a container for a Magento
 - Docker accessible via command line using the command `docker`
 
 ## Installation
-### Composer
+### Composer (Per Project)
 
     composer require fsspencer/dockerize-magento
 
@@ -32,7 +32,7 @@ or
     
 That will pull the necessary Docker images.
 
-### Manual
+### Manual (Global)
 
 Open your bash file (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) and append the following line:
 
@@ -99,7 +99,7 @@ Actions:
 ### New Project
 1. Download a Magento clean instance from https://magento.com/tech-resources/download
 2. Uncompress the Magento code and go into the project root directory
-3. Execute the following from your root directory `dockerize install`
+3. Execute the following from your root directory `dockerize init`
 4. Follow the steps of the script
 5. Select `create new database` without importing anything
 6. Go to your browser and navigate to the URL you picked (http://dev.local/ by default)
@@ -107,14 +107,14 @@ Actions:
 ### Existing Project
 1. Download your project code within any directory you want
 2. Copy a single sql file with a database dump to your project root
-3. Execute the following from your root directory `dockerize install`
+3. Execute the following from your root directory `dockerize init`
 4. Follow the steps of the script
 5. Select `create new database` and `import database` when the script asks. This will create your local.xml file, set your store URL and the rest
 
 ## Magento 2 Usage
 ### New Project
 1. Create a new directory for your project
-2. Execute the following from your root directory `dockerize install`
+2. Execute the following from your root directory `dockerize init`
 3. Follow the steps of the script
 4. Enter `Y` when it asks for `create database` 
 5. Enter `n` when it asks for `import database` 
@@ -125,7 +125,7 @@ Actions:
 1. Download your project code within any directory you want
 2. Copy a single sql file with a database dump to your project root
 3. Get a copy from the original app/etc/config.php
-4. Execute the following from your root directory `dockerize install`
+4. Execute the following from your root directory `dockerize init`
 5. Follow the steps of the script
 6. Select `create new database` and `import database` when the script asks. This will create your env.php file, set your store URL and the rest
 
@@ -154,17 +154,15 @@ This will locate you on the `/var/www/html` directory, which is your root dir wi
 
 You can perform the following commands
 
-	$ docker exec -ti magento mysql -uroot -proot -e "your sql query;"
+	$ dockerize mysql -e "your sql query;"
 
-Or just enter to mysql
+Or just enter to mysql server
 
-	$ docker exec -ti magento mysql -uroot -proot
+	$ dockerize mysql
 
-You can also log into the web server and connect directly to mysql from there, generate a mysqldump or wherever you want
+If you have a mysql-client installed locally on your computer, you can connect to it using Docker default IP address `0.0.0.0`
 
-	$ docker exec -ti magento bash
-	
-	$ mysql -h [YOUR MYSQL CONTAINER IP] -uroot -proot
+	$ mysql -h 0.0.0.0 -uroot -proot
 
 ## Grunt / Gulp
 

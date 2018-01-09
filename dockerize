@@ -168,6 +168,8 @@ function deploymentScript {
 			echo -e "${BLUE}-------------------------------------${NC}"
 
 			docker exec --user www-data -ti $CONTAINER_NAME sh $DEPLOYMENT_SCRIPT 
+		else
+			docker exec --user www-data -ti $CONTAINER_NAME composer install
 		fi
 	fi
 }
