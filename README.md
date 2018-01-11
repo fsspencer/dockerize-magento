@@ -18,6 +18,20 @@ This is a simple bash script that allows you to create a container for a Magento
 - Docker accessible via command line using the command `docker`
 
 ## Installation
+### Global
+
+Execute the following command in your terminal in order to execute the installer. You need to have "git" and "curl" installed within your terminal.
+
+	bash <(curl -s -X GET "https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize?v='$(date +"%s")'") setup
+
+This will install dockerize in ~/.dockerize/bin and create a symlink on the /usr/local/bin directory.
+
+Once you do that, execute the following
+
+	dockerize install
+	
+That will pull the necessary Docker images.
+
 ### Composer (Per Project)
 
     composer require fsspencer/dockerize-magento
@@ -32,22 +46,6 @@ or
     
 That will pull the necessary Docker images.
 
-### Manual (Global)
-
-Open your bash file (like `~/.bash_profile`, `~/.bashrc`, `~/zshrc`, etc.) and append the following line:
-
-	alias dockerize='bash <(curl -s -X GET "https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize?v='$(date +"%s")'")'
-
-Then reload the configurations to apply the changes:
-	
-	source ~/.bash_profile
-
-Or whatever is your profile file.
-Once you do that, execute the following
-
-	dockerize install
-	
-That will pull the necessary Docker images.
 
 ## Usage
 
@@ -80,6 +78,9 @@ Actions:
 | **start** | *Start the server and all of its components* |
 | **stop** | *Stop the server* |
 | **remove** | *Removes local dockerize configuration* |
+||
+| **setup** | *Installs dockerize locally on your computer* |
+| **self-update** | *Updates dockerize locally on your computer* |
 
 
 **NOTE:** All of this commands will work only for your project root directory. That means that if you want to use, for example, gulp on a specify directory within project project (e.g.: skin/frontend/myvendor/mytheme/) it won't work. In that case, you will need to use the "dockerize bash" command and navigate to that directory and use the gulp command from that place.
