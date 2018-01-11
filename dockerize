@@ -160,7 +160,7 @@ function start {
 function deploymentScript {
 	if [ $IS_DOCKERIZED -eq 0 ]; then
 		read -p "Do you have a deployment script? [Y/n]: " HAS_DEPLOYMENT_SCRIPT
-		if [ "$HAS_DEPLOYMENT_SCRIPT" = "Y" ]; then
+		if [ "$HAS_DEPLOYMENT_SCRIPT" = "Y" ] || [ "$HAS_DEPLOYMENT_SCRIPT" = "y" ]; then
 			read -p "Deployment script location (relative path + filename): " DEPLOYMENT_SCRIPT
 
 			echo -e "${BLUE}\n-------------------------------------${NC}"
@@ -336,7 +336,7 @@ function dbCreate {
 
 	echo -e "\n"
 	read -p "Import database? [Y/n]: " IMPORTDB
-	if [ "$IMPORTDB" = "Y" ]; then
+	if [ "$IMPORTDB" = "Y" ] || [ "$IMPORTDB" = "y" ]; then
 
 		echo -e "${BLUE}\n-------------------------------------${NC}"
 		echo -e "${BLUE}Import Database:${NC}"
@@ -355,7 +355,7 @@ function dbCreate {
 		
 		if [ "$MVERSION" -eq "2" ]; then
 			read -p "Install Magento? [Y/n]: " INSTALLMAGE
-			if [ "$INSTALLMAGE" = "Y" ]; then
+			if [ "$INSTALLMAGE" = "Y" ] || [ "$INSTALLMAGE" = "y" ]; then
 				installMagento
 			fi
 		fi
@@ -407,7 +407,7 @@ function installDB {
 	if [ $IS_DOCKERIZED -eq 0 ]; then
 
 		read -p "Create database? (Drop if exists) [Y/n]: " CREATEDB	
-		if [ "$CREATEDB" = "Y" ]; then
+		if [ "$CREATEDB" = "Y" ] || [ "$CREATEDB" = "y" ]; then
 			dbCreate
 		else
 			CREATEDB=0
