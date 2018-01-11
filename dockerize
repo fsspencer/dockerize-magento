@@ -609,7 +609,6 @@ case "$1" in
     checkIsRunning
     setStoreConfigurations
     ;;
-    ;;
 
     db:create)
     shift 1
