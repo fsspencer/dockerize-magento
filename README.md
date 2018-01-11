@@ -24,11 +24,8 @@ Execute the following command in your terminal in order to execute the installer
 
 	bash <(curl -s -X GET "https://raw.githubusercontent.com/fsspencer/bash-docker-magento/master/dockerize?v='$(date +"%s")'") setup
 
-This will install dockerize in ~/.dockerize/bin and create a symlink on the /usr/local/bin directory.
+This will install dockerize in ~/.dockerize/bin and create a symlink on the /usr/local/bin directory, and it will download each needed container for docker.
 
-Once you do that, execute the following
-
-	dockerize install
 	
 That will pull the necessary Docker images.
 
