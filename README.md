@@ -71,6 +71,8 @@ Actions:
 | **n98** | *Executes n98-magerun within your project root* |
 | **magento** | *Executes Magento 2 command line tool (e.g: dockerize magento setup:upgrade)* |
 ||
+| **config:url** | *Set automatically the Store URL among other things* |
+||
 | **db:create** | *Creates new database* |
 | **db:import** | *Imports a .sql file located in the project root* |
 | **db:dump** | *Generates a database file in the project root compressed using gzip* |

@@ -292,20 +292,7 @@ function createMysql {
 	docker start mysql
 }
 
-function importDatabase {
-	echo -e "${BLUE}\nImporting sql file into database...${NC}"
-
-	# IF is a mac
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		LC_ALL=C sed -i '' 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
-	else
-		sed -i 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
-	fi
-
-	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
-	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
-
-	echo -e "${BLUE}\nDB Import process finished${NC}"
+function setStoreConfigurations {
 	echo -e "${BLUE}\nSetting up Magento configurations${NC}"
 
 	if [ "$MVERSION" -eq "2" ]; then
@@ -331,6 +318,23 @@ function importDatabase {
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun cache:clean
 	fi
 	echo -e "${BLUE}\nFinished Setting up Magento configurations${NC}"
+}
+
+function importDatabase {
+	echo -e "${BLUE}\nImporting sql file into database...${NC}"
+
+	# IF is a mac
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		LC_ALL=C sed -i '' 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
+	else
+		sed -i 's/ROW_FORMAT=FIXED//g' ${SQLNAME}
+	fi
+
+	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
+	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "USE ${DBNAME}; SOURCE ${SQLNAME};"
+
+	echo -e "${BLUE}\nDB Import process finished${NC}"
+	setStoreConfigurations
 }
 
 function dbImport {
@@ -499,6 +503,9 @@ function usage {
   echo -e " " "${GREEN}n98${NC}" "\t\t" "Executes n98-magerun within your project root"
   echo -e " " "${GREEN}magento${NC}" "\t" "Executes Magento 2 command line tool (e.g: dockerize magento setup:upgrade)"
   echo ""
+  echo -e "Magento:"
+  echo -e " " "${GREEN}config:url${NC}" "\t" "Set automatically the Store URL among other things"
+  echo ""
   echo "Database:"
   echo -e " " "${GREEN}db:create${NC}" "\t" "Creates new database"
   echo -e " " "${GREEN}db:import${NC}" "\t" "Imports a specified .sql file into the database"
@@ -595,6 +602,13 @@ case "$1" in
 	else
 		echo -e "${RED}File bin/magento does not exists${NC}"
 	fi
+    ;;
+
+    config:url)
+    shift 1
+    checkIsRunning
+    setStoreConfigurations
+    ;;
     ;;
 
     db:create)
