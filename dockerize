@@ -62,6 +62,25 @@ DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(s
 ####		 Functions
 ######################################################
 
+function setup {
+	if [ -z $(eval command -v git) ]; then
+		echo "${RED}GIT is not installed${NC}"
+		exit 1
+	fi	
+
+	mkdir -p ~/.dockerize/bin
+
+	if [ -f ~/.dockerize/bin/dockerize ]; then
+		rm -rf ~/.dockerize/bin		
+		rm /usr/local/bin/dockerize
+	fi
+	git clone https://github.com/fsspencer/dockerize-magento ~/.dockerize/bin &> /dev/null
+	ln -s ~/.dockerize/bin/dockerize /usr/local/bin/dockerize
+
+	echo -e "${GREEN}Dockerize installed properly. Now you can use it as 'dockerize' in your terminal${NC}"
+	exit 1
+}
+
 function install {
 	echo -e "${BLUE}\n-------------------------------------${NC}"
 	echo -e "${BLUE}Installing containers:${NC}"
@@ -490,6 +509,10 @@ function usage {
   echo -e " " "${GREEN}stop${NC}" "\t\t" "Stop the server"
   echo -e " " "${GREEN}remove${NC}" "\t" "Remove dockerize local config"
   echo ""
+  echo "Dockerize:"
+  echo -e " " "${GREEN}setup${NC}" "\t" "Installs dockerize locally on your computer"
+  echo -e " " "${GREEN}self-update${NC}" "\t" "Updates dockerize locally on your computer"
+  echo ""
 }
 
 ######################################################
@@ -603,6 +626,14 @@ case "$1" in
 
     remove)
     rm ~/$DOCKERIZE_PATH/$PROJECT_PATH_MD5
+    ;;
+
+    setup)
+    setup
+    ;;
+
+    self-update)
+    setup
     ;;
 
     *)
