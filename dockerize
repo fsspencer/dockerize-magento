@@ -62,25 +62,6 @@ DB_IPADDRESS=$(docker inspect mysql | python -c 'import json,sys;obj=json.load(s
 ####		 Functions
 ######################################################
 
-function setup {
-	if [ -z $(eval command -v git) ]; then
-		echo "${RED}GIT is not installed${NC}"
-		exit 1
-	fi	
-
-	mkdir -p ~/.dockerize/bin
-
-	if [ -f ~/.dockerize/bin/dockerize ]; then
-		rm -rf ~/.dockerize/bin		
-		rm /usr/local/bin/dockerize
-	fi
-	git clone https://github.com/fsspencer/dockerize-magento ~/.dockerize/bin &> /dev/null
-	ln -s ~/.dockerize/bin/dockerize /usr/local/bin/dockerize
-
-	echo -e "${GREEN}Dockerize installed properly. Now you can use it as 'dockerize' in your terminal${NC}"
-	exit 1
-}
-
 function install {
 	echo -e "${BLUE}\n-------------------------------------${NC}"
 	echo -e "${BLUE}Installing containers:${NC}"
@@ -104,7 +85,26 @@ function install {
 	fi
 
 	echo -e "${GREEN}Installation finished${NC}"
-	exit
+}
+
+function setup {
+	if [ -z $(eval command -v git) ]; then
+		echo "${RED}GIT is not installed${NC}"
+		exit 1
+	fi	
+
+	mkdir -p ~/.dockerize/bin
+
+	if [ -f ~/.dockerize/bin/dockerize ]; then
+		rm -rf ~/.dockerize/bin		
+		rm /usr/local/bin/dockerize
+	fi
+	git clone https://github.com/fsspencer/dockerize-magento ~/.dockerize/bin &> /dev/null
+	ln -s ~/.dockerize/bin/dockerize /usr/local/bin/dockerize
+
+	install
+
+	echo -e "${GREEN}Dockerize installed properly. Now you can use it as 'dockerize' in your terminal${NC}"
 }
 
 function update {
