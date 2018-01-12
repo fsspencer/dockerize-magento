@@ -465,13 +465,18 @@ function addHost {
 	echo -e "${BLUE}This operation needs super privileges${NC}"
     HOSTS_LINE="$IP $HOST_NAME"
 
-    # if is mac
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-    	sudo sed -i "" "/$HOST_NAME/d" $ETC_HOSTS
-	else
-		sudo sed -i "/$HOST_NAME/d" $ETC_HOSTS
+    if [ ! grep -Fxq "$HOST_NAME" $ETC_HOSTS ]; then
+	    # host registry not found
+	   
+	    # if is mac
+	    if [[ "$OSTYPE" == "darwin"* ]]; then
+	    	sudo sed -i "" "/$HOST_NAME/d" $ETC_HOSTS
+		else
+			sudo sed -i "/$HOST_NAME/d" $ETC_HOSTS
+		fi
+	    sudo -- sh -c -e "echo '$HOSTS_LINE' >> $ETC_HOSTS"
 	fi
-    sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
+    
 }
 
 function finish {
