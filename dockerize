@@ -308,8 +308,8 @@ function setStoreConfigurations {
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/css/minify_files 0
 		docker exec --user www-data -ti $CONTAINER_NAME n98-magerun2.phar config:store:set dev/static/sign 0
 
-		docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "REPLACE INTO authorization_role ('role_id', 'parent_id', 'tree_level', 'sort_order', 'role_type', 'user_id', 'user_type', 'role_name') VALUES (1, 0, 1, 1, 'G', 0, '2', 'Administrators');"
-		docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "REPLACE INTO 'authorization_rule' ('rule_id', 'role_id', 'resource_id', 'privileges', 'permission') VALUES (1, 1, 'Magento_Backend::all', NULL, 'allow')"
+		docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "REPLACE INTO authorization_role (role_id, parent_id, tree_level, sort_order, role_type, user_id, user_type, role_name) VALUES (1, 0, 1, 1, 'G', 0, '2', 'Administrators');"
+		docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "REPLACE INTO authorization_rule (rule_id, role_id, resource_id, privileges, permission) VALUES (1, 1, 'Magento_Backend::all', NULL, 'allow');"
 		
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:upgrade
 		docker exec --user www-data -ti $CONTAINER_NAME php bin/magento cache:clean
