@@ -324,6 +324,17 @@ function setStoreConfigurations {
 	echo -e "${BLUE}\nFinished Setting up Magento configurations${NC}"
 }
 
+function createAdminUser {
+	if [ "$MVERSION" -eq "2" ]; then
+		read -p "Create Admin User? [Y/n]: " CREATE_ADMINUSER
+		if [ "$CREATE_ADMINUSER" = "Y" ] || [ "$CREATE_ADMINUSER" = "y" ]; then
+			read -p "Admin Password: " ADMIN_PASSWORD
+			docker exec --user www-data -ti $CONTAINER_NAME php bin/magento admin:user:create --admin-user="admin" --admin-firstname="Admin" --admin-lastname="Web" --admin-email="admin@sample.com" --admin-password="$ADMIN_PASSWORD"
+		fi
+		
+	fi
+}
+
 function importDatabase {
 	echo -e "${BLUE}\nImporting sql file into database...${NC}"
 
@@ -339,6 +350,7 @@ function importDatabase {
 
 	echo -e "${BLUE}\nDB Import process finished${NC}"
 	setStoreConfigurations
+	createAdminUser
 }
 
 function dbImport {
