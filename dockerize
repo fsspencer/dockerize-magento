@@ -561,6 +561,7 @@ case "$1" in
     deploymentScript
     installDB
     outputData
+    finish
     ;;
 
     bash)
@@ -631,12 +632,14 @@ case "$1" in
     shift 1
     checkIsRunning
     dbCreate
+    finish
     ;;
 
     db:import)
     shift 1
     checkIsRunning
     dbImport
+    finish
     ;;
 
     db:dump)
@@ -648,10 +651,12 @@ case "$1" in
     start)
     start
     outputData
+    finish
     ;;
 
     stop)
     stop
+    finish
     ;;
 
     remove)
@@ -671,7 +676,5 @@ case "$1" in
     usage
     ;;
 esac
-
-finish
 
 exit 0
