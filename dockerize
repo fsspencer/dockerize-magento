@@ -356,6 +356,8 @@ function importDatabase {
 function dbImport {
 	read -p "SQL Filename (Must be placed in project root)?: " SQLNAME
 	docker exec --user www-data -ti $CONTAINER_NAME n98 db:import --drop $SQLNAME 
+	setStoreConfigurations
+	createAdminUser
 }
 
 function dbDump {
