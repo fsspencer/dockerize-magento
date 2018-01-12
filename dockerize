@@ -664,6 +664,7 @@ case "$1" in
     ;;
 
     self-update)
+	echo -e "${BLUE}Fetching latest version...${NC}"
     setup
     ;;
 
