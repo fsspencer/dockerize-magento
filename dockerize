@@ -466,7 +466,8 @@ function addHost {
 	echo -e "${BLUE}This operation needs super privileges${NC}"
     HOSTS_LINE="$IP $HOST_NAME"
 
-    if [ ! grep "$HOST_NAME" "$ETC_HOSTS" ]; then
+    if grep -Fxq "$HOST_NAME" $ETC_HOSTS
+	then
 	    # host registry not found
 	   
 	    # if is mac
