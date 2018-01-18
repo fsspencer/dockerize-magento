@@ -356,6 +356,7 @@ function importDatabase {
 
 function dbImport {
 	read -p "SQL Filename (Must be placed in project root)?: " SQLNAME
+	docker exec --user www-data -ti $CONTAINER_NAME mysql -h $DB_IPADDRESS -uroot -proot -e "set @@global.show_compatibility_56=ON;"
 	docker exec --user www-data -ti $CONTAINER_NAME n98 db:import --drop $SQLNAME 
 	setStoreConfigurations
 	createAdminUser
