@@ -416,6 +416,11 @@ function installMagento {
 		read -p "Admin First Name: " ADM_FNAME
 		read -p "Admin Last Name: " ADM_LNAME
 		read -p "Admin Email: " ADM_EMAIL
+		read -p "Backend Frontname [backend]: " BACKEND_FRONTNAME
+		
+		if [ -z $BACKEND_FRONTNAME ]; then
+			BACKEND_FRONTNAME="backend"
+		fi
 
 		if [ ! -f ${PROJECT_PATH}/bin/magento ]; then
 			
@@ -441,6 +446,7 @@ function installMagento {
 			--admin-lastname="$ADM_LNAME" \
 			--admin-email="$ADM_EMAIL" \
 			--base-url="$BASE_URL" \
+			--backend-"$BACKEND_FRONTNAME" \
 			--use-rewrites=1
 		
 	fi
