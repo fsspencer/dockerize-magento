@@ -425,7 +425,7 @@ function installMagento {
 			read -p "Version Number [2.2.0]: " M2_VERSIONNUM
 			docker exec --user www-data -ti $CONTAINER_NAME composer create-project ${REPO_M2}:${M2_VERSIONNUM} _src
 
-			rsync -az --ignore-existing _src/* ./
+			rsync -az --ignore-existing _src/ ./
 			rm -rf _src
 			
 		fi
