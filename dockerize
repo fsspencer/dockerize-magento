@@ -189,7 +189,9 @@ function deploymentScript {
 
 			docker exec --user www-data -ti $CONTAINER_NAME sh $DEPLOYMENT_SCRIPT 
 		else
-			docker exec --user www-data -ti $CONTAINER_NAME composer install
+			if [ -f ${PROJECT_PATH}/composer.json ]; then
+				docker exec --user www-data -ti $CONTAINER_NAME composer install
+			fi
 		fi
 	fi
 }
