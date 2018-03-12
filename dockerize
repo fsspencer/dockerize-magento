@@ -240,7 +240,7 @@ function createConfigFile {
 					--admin-email="admin@sample.com" \
 					--base-url="$BASE_URL" \
 					--use-rewrites=1 \
-					--backend-"$BACKEND_FRONTNAME"
+					--backend-frontname="$BACKEND_FRONTNAME"
 			else
 				docker exec --user www-data -ti $CONTAINER_NAME php bin/magento setup:install \
 					--db-host="$DB_IPADDRESS" \
@@ -254,7 +254,7 @@ function createConfigFile {
 					--admin-email="admin@sample.com" \
 					--base-url="$BASE_URL" \
 					--use-rewrites=1 \
-					--backend-"$BACKEND_FRONTNAME"
+					--backend-frontname="$BACKEND_FRONTNAME"
 			fi
 		fi
 	else
@@ -448,7 +448,7 @@ function installMagento {
 			--admin-lastname="$ADM_LNAME" \
 			--admin-email="$ADM_EMAIL" \
 			--base-url="$BASE_URL" \
-			--backend-"$BACKEND_FRONTNAME" \
+			--backend-frontname="$BACKEND_FRONTNAME" \
 			--use-rewrites=1
 		
 	fi
